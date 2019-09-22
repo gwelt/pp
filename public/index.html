@@ -20,17 +20,21 @@ function loadScript(src, done) {
 setTimeout(function(){SocketIO()},0);
 function SocketIO() {if (!socket) {loadScript('/socket.io/socket.io.js', function() {
   socket=io();
-	//socket.emit('join',window.location.pathname.substring(1));
+  socket.on('reset', function () {
+  	document.getElementById('vote').value='';
+  	socket.emit('set_vote',document.getElementById('vote').value);
+  });
   socket.on('data', function (json) {
   	console.log(JSON.stringify(json));
-  	//if (json.id!==undefined) {document.getElementById('current_id').innerHTML=json.id};
-  	if (json.name!==undefined) {let n=document.getElementById('name'); if ((n.value!='')&&(n.value!==json.name)) {socket.emit('set_name',n.value)} else {n.value=json.name}};
-  	//if (json.room!==undefined) {document.getElementById('current_room').innerHTML=json.room};
+  	if ((json.name!==undefined)&&(document.getElementById('name').value=='')) {document.getElementById('name').value=json.name};
   	if (json.players!==undefined) {document.getElementById('current_players').innerHTML=JSON.stringify(json.players)};
-  	//if (json.message!==undefined) {document.getElementById('message').innerHTML=json.message};
+  });
+  socket.on('reconnect', function () {
+  	socket.emit('set_name',document.getElementById('name').value);
+  	socket.emit('set_vote',document.getElementById('vote').value);
   });
   socket.on('disconnect', function (reason) {
-  	//document.getElementById('message').innerHTML='DISCONNECTED! '+reason;
+  	console.log('DISCONNECT! '+reason);
   });
 })}};
 
@@ -46,17 +50,6 @@ function SocketIO() {if (!socket) {loadScript('/socket.io/socket.io.js', functio
 <body>
 
 <div id="bigscreen" class="bigscreen">
-	<!--
-	ID: <div id="current_id"></div>
-	NAME: <div id="current_name"></div>
-	ROOM: <div id="current_room"></div>
-	PLAYERS: <div id="current_players"></div>
-	MESSAGE: <div id="message"></div>
-	<input type=text id=room autocomplete=off value="123"> &nbsp;
-	<button onclick="socket.emit('join',document.getElementById('room').value)">join room</button>
-	<button onclick="socket.emit('leave')">leave room</button>
-	<br>
-	-->
 	<input type=text id=name autocomplete=off> <button onclick="socket.emit('set_name',document.getElementById('name').value)">set name</button>
 	<br><input type=text id=vote autocomplete=off> <button onclick="socket.emit('set_vote',document.getElementById('vote').value)">vote</button>
 	<button onclick="socket.emit('reset')">reset all votes</button>

@@ -67,10 +67,13 @@ function set_vote(socket,vote) {
 }
 
 function reset(socket) {
+	io.in(socket.current_room).emit('reset');
+	/*
 	io.in(socket.current_room).clients((err , clients) => {
 		let players = clients.map((c)=>{let u=io.in(socket.current_room).connected[c]; u.vote=undefined; return {id:u.id,name:u.name,vote:u.vote}});
 		io.in(socket.current_room).emit('data',{players:players});
 	});
+	*/
 }
 
 function update_players(room) {
