@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!--
+<link rel="icon" type="image/png" href="images/pp.png">
+<link rel="apple-touch-icon" sizes="180x180" href="images/pp180.png">
+-->
+<meta name="theme-color" content="#000">
+<meta name="Description" content="planning poker">
+<title>planning poker</title>
+<script>
+var socket=undefined;
+
+function loadScript(src, done) {
+  var js = document.createElement('script');
+  js.src = src;
+  js.onload = function() {done(src+' executed')};
+  document.head.appendChild(js);
+}
+
+setTimeout(function(){SocketIO()},0);
+function SocketIO() {if (!socket) {loadScript('/pp/socket.io/socket.io.js', function() {
+  socket=io.connect('', { 'path': '/pp/socket.io' });
+
+  socket.on('reset', function () {
+  	document.getElementById('vote').value='';
+  	socket.emit('set_vote',document.getElementById('vote').value);
+  });
+  socket.on('data', function (json) {
+  	console.log(JSON.stringify(json));
+  	if ((json.name!==undefined)&&(document.getElementById('name').value=='')) {document.getElementById('name').value=json.name};
+  	if (json.players!==undefined) {document.getElementById('current_players').innerHTML=JSON.stringify(json.players)};
+  });
+  socket.on('reconnect', function () {
+    console.log('RECONNECTED!');
+  	socket.emit('set_name',document.getElementById('name').value);
+  	socket.emit('set_vote',document.getElementById('vote').value);
+  });
+  socket.on('disconnect', function (reason) {
+  	console.log('DISCONNECTED! '+reason);
+  });
+})}};
+
+</script>
+
+<style>
+	* {box-sizing: border-box;}
+	html, body, section, div, input {font-family: Monospace; font-size: 1.1rem;}
+	body {border:0; padding:0; margin:0; color: #000;}
+</style>
+
+</head>
+<body>
+
+<div id="bigscreen" class="bigscreen">
+	<input type=text id=name autocomplete=off> <button onclick="socket.emit('set_name',document.getElementById('name').value)">set name</button>
+	<br><input type=text id=vote autocomplete=off> <button onclick="socket.emit('set_vote',document.getElementById('vote').value)">vote</button>
+	<button onclick="socket.emit('reset')">reset all votes</button>
+	<div id="current_players"></div>
+</div>
+
+</body>
+
+</html>
