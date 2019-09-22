@@ -6,7 +6,7 @@
 <link rel="apple-touch-icon" sizes="180x180" href="images/pp180.png">
 <meta name="theme-color" content="#000">
 <meta name="Description" content="planning poker">
-<title>planning poker</title>
+<title>planning poker public</title>
 <script>
 var socket=undefined;
 
@@ -19,7 +19,11 @@ function loadScript(src, done) {
 
 setTimeout(function(){SocketIO()},0);
 function SocketIO() {if (!socket) {loadScript('/socket.io/socket.io.js', function() {
+  console.log('starting socketIO');
   socket=io();
+  socket.on('connect', function () {
+    console.log('connected '+socket);
+  });
   socket.on('reset', function () {
   	document.getElementById('vote').value='';
   	socket.emit('set_vote',document.getElementById('vote').value);

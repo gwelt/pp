@@ -1,16 +1,20 @@
+'use strict';
 var express = require('express');
-//var bodyParser = require('body-parser');
 var app = express();
 var server = require('http').createServer(app);
-var io = require('socket.io')(server);
-var config = {};
-try {config=require('./config.json')} catch(err){};
-var port = process.env.PORT || config.port || 3000;
-server.listen(port, function () {console.log('\x1b[44m SERVER LISTENING ON PORT '+port+' \x1b[0m')});
-
+var io = require('socket.io').listen(server, {'path': '/pp/socket.io'});
+//var io = require('socket.io')(server);
+//var bodyParser = require('body-parser');
 var path = require('path');
-app.use(express.static(path.join(__dirname, 'public')));
-app.use(function(req, res, next){res.sendFile('index.html',{root:path.join(__dirname,'public')})});
+var PORT = process.env.PORT || 3008;
+
+server.listen(PORT, function() {process.stdout.write(`\x1b[44m SUDOKU SERVER LISTENING ON PORT ${ PORT } \x1b[0m \n`)});
+
+//app.use(express.static(path.join(__dirname, 'public')));
+//app.use(function(req, res, next){res.sendFile('index.html',{root:path.join(__dirname,'public')})});
+//app.use(bodyParser.json());
+//app.use(bodyParser.urlencoded({ extended: true }));
+app.use(function(req,res) {res.sendFile(path.join(__dirname, 'index.html'))}); //res.setHeader('Access-Control-Allow-Origin','*');
 
 let names = ['Kermit the Frog','Miss Piggy','Fozzie Bear','Gonzo','Rowlf the Dog','Scooter','Animal','Pepe the King Prawn','Rizzo the Rat','Walter','Dr. Teeth','Statler','Waldorf','Bunsen Honeydew','Beaker','The Swedish Chef','Sam Eagle','Camilla the Chicken','Bobo the Bear','Clifford'];
 
