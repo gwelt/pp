@@ -19,16 +19,15 @@ app.use(function(req,res) {res.sendFile(path.join(__dirname, 'index.html'))}); /
 let names = ['Kermit the Frog','Miss Piggy','Fozzie Bear','Gonzo','Rowlf the Dog','Scooter','Animal','Pepe the King Prawn','Rizzo the Rat','Walter','Dr. Teeth','Statler','Waldorf','Bunsen Honeydew','Beaker','The Swedish Chef','Sam Eagle','Camilla the Chicken','Bobo the Bear','Clifford'];
 
 io.on('connection', function (socket) {
-  socket.emit('data',{message: 'Welcome '+socket.id+'!'});
+  socket.emit('about:you',{message: 'Welcome '+socket.id+'!'});
   join(socket,socket.client.request.headers.referer.match(/[^\/]\/([^\/]*)\/?$/i)[1]);
-  set_name(socket,names[Math.floor(Math.random()*names.length)]);
+  set(socket,names[Math.floor(Math.random()*names.length)],undefined);
   // socket.emit = reply only to the client who asked
   // socket.broadcast.emit = reply to all clients except the one who asked
   // io.sockets.emit = reply to all clients (including the one who asked)
   socket.on('join', function (room) {join(socket,room)});
   socket.on('leave', function () {leave(socket)});
-  socket.on('set_name', function (name) {set_name(socket,name)});
-  socket.on('set_vote', function (vote) {set_vote(socket,vote)});
+  socket.on('set', function (name,vote) {set(socket,name,vote)});
   socket.on('reset', function () {reset(socket)});
   socket.on('disconnect', function () {leave(socket)});
 });
@@ -38,9 +37,9 @@ function join(socket,room) {
 		if (socket.current_room!==undefined) {leave(socket,socket.current_room)}
 		socket.join(room,()=>{
 			socket.current_room=room;
-			update_players(socket.current_room);
-			socket.emit('data',{message:'You joined '+socket.current_room});
-			update_status(socket);		
+			update_about_episode(socket.current_room);
+			socket.emit('about:you',{message:'You joined '+socket.current_room});
+			update_about_you(socket);		
 		});
 	}
 }
@@ -48,51 +47,39 @@ function join(socket,room) {
 function leave(socket) {
 	if (socket.current_room!==undefined) {
 		socket.leave(socket.current_room,()=>{
-			update_players(socket.current_room);
-			socket.emit('data',{message:'You left '+socket.current_room});
+			update_about_episode(socket.current_room);
+			socket.emit('about:you',{message:'You left '+socket.current_room});
 			socket.current_room=undefined;
-			update_status(socket);
+			update_about_you(socket);
 		});
 	}
 }
 
-function set_name(socket,name) {
+function set(socket,name,vote) {
 	socket.name=(name==''?undefined:name);
-	socket.emit('data',{message:'Your name is '+socket.name});
-	update_players(socket.current_room);
-	update_status(socket);
-}
-
-function set_vote(socket,vote) {
 	socket.vote=(vote==''?undefined:vote);
-	socket.emit('data',{message:'You voted '+socket.vote});
-	update_players(socket.current_room);
-	update_status(socket);
+	socket.emit('about:you',{message:socket.name+', you voted '+socket.vote});
+	update_about_episode(socket.current_room);
+	update_about_you(socket);
 }
 
 function reset(socket) {
 	io.in(socket.current_room).emit('reset');
-	/*
-	io.in(socket.current_room).clients((err , clients) => {
-		let players = clients.map((c)=>{let u=io.in(socket.current_room).connected[c]; u.vote=undefined; return {id:u.id,name:u.name,vote:u.vote}});
-		io.in(socket.current_room).emit('data',{players:players});
-	});
-	*/
 }
 
-function update_players(room) {
+function update_about_episode(room) {
 	io.in(room).clients((err , clients) => {
 		let players = clients.map((c)=>{let u=io.in(room).connected[c]; return {id:u.id,name:u.name,vote:u.vote}});
-		io.in(room).emit('data',{players:players});
+		io.in(room).emit('about:episode',{room:room,players:players});
 	});
 }
 
-function update_status(socket) {
+function update_about_you(socket) {
 	if (socket.current_room!==undefined) {
-		socket.emit('data',{room:socket.current_room,id:socket.id,name:socket.name,vote:socket.vote});
+		socket.emit('about:you',{room:socket.current_room,id:socket.id,name:socket.name,vote:socket.vote});
 	}
 	else {
-		socket.emit('data',{room:null,players:[],id:socket.id,name:socket.name,vote:socket.vote})
+		socket.emit('about:you',{room:null,id:socket.id,name:socket.name,vote:socket.vote})
 	}
 }
 

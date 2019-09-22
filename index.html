@@ -24,24 +24,29 @@ function SocketIO() {if (!socket) {loadScript('/pp/socket.io/socket.io.js', func
   socket=io.connect('', { 'path': '/pp/socket.io' });
 
   socket.on('reset', function () {
-  	document.getElementById('vote').value='';
-  	socket.emit('set_vote',document.getElementById('vote').value);
+	document.getElementById('vote').value='';
+	set();  
   });
-  socket.on('data', function (json) {
+  socket.on('about:you', function (json) {
   	console.log(JSON.stringify(json));
   	if ((json.name!==undefined)&&(document.getElementById('name').value=='')) {document.getElementById('name').value=json.name};
+  });
+  socket.on('about:episode', function (json) {
+  	console.log(JSON.stringify(json));
   	if (json.players!==undefined) {document.getElementById('current_players').innerHTML=JSON.stringify(json.players)};
   });
   socket.on('reconnect', function () {
     console.log('RECONNECTED!');
-  	socket.emit('set_name',document.getElementById('name').value);
-  	socket.emit('set_vote',document.getElementById('vote').value);
-  });
+  	set();
+});
   socket.on('disconnect', function (reason) {
   	console.log('DISCONNECTED! '+reason);
   });
 })}};
 
+function set() {
+	socket.emit('set',document.getElementById('name').value,document.getElementById('vote').value);
+}
 </script>
 
 <style>
@@ -54,8 +59,8 @@ function SocketIO() {if (!socket) {loadScript('/pp/socket.io/socket.io.js', func
 <body>
 
 <div id="bigscreen" class="bigscreen">
-	<input type=text id=name autocomplete=off> <button onclick="socket.emit('set_name',document.getElementById('name').value)">set name</button>
-	<br><input type=text id=vote autocomplete=off> <button onclick="socket.emit('set_vote',document.getElementById('vote').value)">vote</button>
+	<input type=text id=name autocomplete=off> <button onclick="set()">set name</button>
+	<br><input type=text id=vote autocomplete=off> <button onclick="set()">vote</button>
 	<button onclick="socket.emit('reset')">reset all votes</button>
 	<div id="current_players"></div>
 </div>
