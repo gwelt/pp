@@ -21,17 +21,30 @@ io.on('connection', function (socket) {
   socket.on('set', function (name,vote) {set(socket,name,vote)});
   socket.on('show', function () {show(socket.current_room)});
   socket.on('reset', function () {reset(socket.current_room)});
-  socket.on('set_room_cards', function (cards) {set_room_cards(socket.current_room,cards,true)});
+  socket.on('set_room_cards', function (cards) {set_room_cards(socket.current_room,cards)});
   socket.on('leave', function () {leave(socket,socket.current_room)});
   socket.on('disconnect', function () {leave(socket,socket.current_room)});
 });
+
+var rooms=[];
+function Room(room_id) {
+	this.room_id=room_id;
+	this.cards=default_cards.trim().split(/\s*,\s*/);
+	this.hidden=undefined;
+}
+function find_room(room_id) {
+	return rooms.find((r)=>{return r.room_id==room_id});
+}
+function delete_room(room_id) {
+	return rooms.filter((r)=>{return r.room_id!==room_id});
+}
 
 function join(socket,room) {
 	if (room!==socket.current_room) {
 		if (socket.current_room!==undefined) {leave(socket,socket.current_room)}
 		socket.join(room,()=>{
+			if (!find_room(room)) {rooms.push(new Room(room))};
 			socket.current_room=room;
-			set_room_cards(room);
 			update_about_you(socket,'You joined room '+room);		
 			update_about_match(room);
 		});
@@ -44,6 +57,7 @@ function leave(socket,room) {
 			socket.current_room=undefined;
 			update_about_you(socket,'You left room '+room);
 			update_about_match(room);
+			io.in(room).clients((err , clients) => {if (clients.length<1) {rooms=delete_room(room)}});			
 		});
 	}
 }
@@ -51,16 +65,14 @@ function leave(socket,room) {
 function set(socket,name,vote) {
 	socket.name=(name!==''?name:undefined);
 	socket.vote=(vote!==''?vote:undefined);
-	//update_about_you(socket,'You ('+socket.name+') voted '+socket.vote);
 	update_about_match(socket.current_room);
 }
 
 function hide(room) {
-	io.in(room).hidden=undefined;
-	//update_about_match(room);
+	if (find_room(room)) {find_room(room).hidden=undefined};
 }
 function show(room) {
-	io.in(room).hidden=false;
+	if (find_room(room)) {find_room(room).hidden=false};
 	update_about_match(room);
 }
 
@@ -69,10 +81,11 @@ function reset(room) {
 	io.in(room).emit('reset');
 }
 
-function set_room_cards(room,cards,overwrite) {
-	if ((overwrite)||(io.in(room).cards==undefined)) {
-		io.in(room).cards=(cards||default_cards).trim().split(/\s*,\s*/);
-		if (overwrite) {reset(room)};
+function set_room_cards(room,cards) {
+	let r=find_room(room);
+	if (r) {
+		r.cards=cards.trim().split(/\s*,\s*/);
+		reset(room);
 	}
 }
 
@@ -83,10 +96,8 @@ function update_about_you(socket,message) {
 function update_about_match(room) {
 	io.in(room).clients((err , clients) => {
 		let players = clients.map((c)=>{let u=io.in(room).connected[c]; return {id:u.id,name:u.name,vote:u.vote}});
-		io.in(room).emit('about:match',{room:room,cards:io.in(room).cards,players:players,hidden:io.in(room).hidden});
+		io.in(room).emit('about:match',{room:room,cards:find_room(room)?find_room(room).cards:undefined,players:players,hidden:find_room(room)?find_room(room).hidden:undefined});
 	});
-	//io.clients((err , clients) => {console.log(clients)});
-	//console.log(io.rooms);
 }
 
 process.on('SIGINT', function(){process.exit(0)});
