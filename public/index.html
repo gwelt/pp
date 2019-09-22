@@ -10,7 +10,7 @@
 <meta name="Description" content="planning poker">
 <title>planning poker</title>
 <script>
-var socket=undefined;
+var socket,current_name,current_vote=undefined;
 
 function loadScript(src, done) {
   var js = document.createElement('script');
@@ -24,32 +24,42 @@ function SocketIO() {if (!socket) {loadScript('/pp/socket.io/socket.io.js', func
   socket=io.connect('', { 'path': '/pp/socket.io' });
 
   socket.on('reset', function () {
-	document.getElementById('vote').value='';
-	set();  
+  	set(undefined,'');  
   });
+
   socket.on('about:you', function (json) {
   	console.log('about:you '+JSON.stringify(json));
     // accept default_name from server
-  	if ((json.name!==undefined)&&(document.getElementById('name').value=='')) {document.getElementById('name').value=json.name};
+  	if ((json.name!==undefined)&&(document.getElementById('name').value=='')) {current_name=json.name;document.getElementById('name').value=json.name};
   });
+
   socket.on('about:match', function (json) {
   	console.log('about:match '+JSON.stringify(json));
-    document.getElementById('match').innerHTML=JSON.stringify(json);
+    document.getElementById('room').innerHTML=((json.room!=='')?'@ '+json.room:'');
+    document.getElementById('cards').innerHTML=json.cards.reduce(function(a,c){return a+'<div class=card'+((c==current_vote)?'_active':'')+' onclick=set(undefined,\''+c+'\')>'+c+'</div>'},'')+'<div class=br></div>';
+    document.getElementById('players').innerHTML=json.players.reduce(function(a,c){return a+'<div class=player'+((c.id==socket.id)?'_active':'')+'>'+(c.name||'')+' ('+(c.vote||'')+')</div>'},'')+'<div class=br></div>';
+    document.getElementById('show_button').disabled=(json.hidden==false);
+    document.getElementById('deck').value=json.cards;
   });
+
   socket.on('reconnect', function () {
     console.log('RECONNECTED!');
   	set();
-});
+  });
+  
   socket.on('disconnect', function (reason) {
   	console.log('DISCONNECTED! '+reason);
   });
+
 })}};
 
-function set() {
-  socket.emit('set',document.getElementById('name').value,document.getElementById('vote').value);
+function set(name,vote) {
+  if (name!==undefined) {current_name=name};
+  if (vote!==undefined) {current_vote=vote};
+  socket.emit('set',current_name,current_vote);
 }
 function set_room_cards() {
-  socket.emit('set_room_cards',document.getElementById('cards').value);
+  socket.emit('set_room_cards',document.getElementById('deck').value);
 }
 function reset() {
   socket.emit('reset');
@@ -61,19 +71,28 @@ function show() {
 
 <style>
 	* {box-sizing: border-box;}
-	html, body, section, div, input {font-family: Monospace; font-size: 1.1rem;}
-	body {border:0; padding:0; margin:0; color: #000;}
+	html, body, section, div, input, button {font-family: Monospace; font-size: 1.1rem;}
+  body {border:0; padding:0; margin:0; color: #000;}
+  .player {background-color:#e0e0e0;}
+  .player_active {background-color:#80e0e0;}
+  .card {float:left;background-color:#505050;color:#fff;font-size:2rem;text-align:center;min-width:5rem;padding:1rem;margin:.2rem;cursor:pointer;}
+  .card_active {float:left;background-color:#80e0e0;color:#000;font-size:2rem;text-align:center;min-width:5rem;padding:1rem;margin:.2rem;cursor:pointer;}
+  .card:hover {background-color:#808080}
+  .link {text-decoration:underline;cursor:pointer;}
+  .admin {display:none}
+  .br {clear:both}
 </style>
 
 </head>
 <body>
 
 <div id="bigscreen" class="bigscreen">
-	<input type="text" id="name" autocomplete="off"> <button onclick="set()">set name</button>
-  <br><input type="text" id="vote" autocomplete="off"> <button onclick="set()">vote</button>
-  <br><input type="text" id="cards" autocomplete="off"> <button onclick="set_room_cards()">set cards</button>
-  <br><button onclick="show()">show</button> <button onclick="reset()">reset</button>
-	<div id="match"></div>
+  <input type="text" id="name" autocomplete="off" onkeyup="set(this.value)"> <span id="room"></span>
+  <div id="cards"></div>
+  <div id="players"></div>
+  <button id="show_button" onclick="show()">show</button> <button onclick="reset()">reset</button> <span class=link onclick="document.getElementById('edit_cards').style.display=(document.getElementById('edit_cards').style.display=='block')?'none':'block'">edit cards</span>
+  <!--<button onclick="socket.emit('leave')">leave</button>-->
+  <div id="edit_cards" class="admin"><form onsubmit="set_room_cards();return false;"><input type="text" id="deck" autocomplete="off"> <button onclick="set_room_cards()">set cards</button></form></div>
 </div>
 
 </body>
