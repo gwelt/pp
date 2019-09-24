@@ -5,6 +5,7 @@
 <!--
 <link rel="icon" type="image/png" href="images/pp.png">
 <link rel="apple-touch-icon" sizes="180x180" href="images/pp180.png">
+<link rel="manifest" href="manifest.json">
 -->
 <meta name="theme-color" content="#000">
 <meta name="Description" content="planning poker">
@@ -17,7 +18,8 @@ var current_name=default_names[Math.floor(Math.random()*default_names.length)];
 // dynamically add manifest.json because it has to be delivered from subdirectory
 if (1) { //(window.location.pathname.substr(1)) {
   link=document.createElement('link');
-  link.href=window.location.pathname.substr(1)+'/manifest.json';
+  link.href=window.location.pathname+(window.location.pathname.length>4?'/':'')+'manifest.json';
+  console.log(link.href);
   link.rel='manifest';
   document.getElementsByTagName('head')[0].appendChild(link);
 }

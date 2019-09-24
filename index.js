@@ -9,8 +9,8 @@ server.listen(PORT, function() {process.stdout.write(`\x1b[44m SERVER LISTENING 
 app.use('/:path?/:id?/manifest.json', function (req, res) {
   //let id=(req.params.id)||'';
   res.json({
-    "short_name": "planning poker",
-    "name": "planning poker",
+    "short_name": "planning",
+    "name": "planning",
     "icons": [
       {"src": "/images/pp192.png","sizes": "192x192","type": "image/png"},
       {"src": "/images/pp512.png","sizes": "512x512","type": "image/png"},
