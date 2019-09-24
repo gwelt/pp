@@ -1,0 +1,2 @@
+
+{"short_name":"planning","name":"planning poker","icons":[{"src":"/images/pp192.png","sizes":"192x192","type":"image/png"},{"src":"/images/pp512.png","sizes":"512x512","type":"image/png"},{"src":"/images/pp1024.png","sizes":"1024x1024","type":"image/png"}],"start_url":"/","background_color":"#000","theme_color":"#000","display":"standalone"}
