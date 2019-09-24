@@ -10,7 +10,7 @@
 <meta name="Description" content="planning poker">
 <title>planning poker</title>
 <script>
-var socket,current_vote=undefined;
+var socket,current_vote,current_match=undefined;
 var default_names = ['Kermit the Frog','Miss Piggy','Fozzie Bear','Gonzo','Rowlf the Dog','Scooter','Animal','Pepe the King Prawn','Rizzo the Rat','Walter','Dr. Teeth','Statler','Waldorf','Bunsen Honeydew','Beaker','The Swedish Chef','Sam Eagle','Camilla the Chicken','Bobo the Bear','Clifford'];
 var current_name=default_names[Math.floor(Math.random()*default_names.length)];
 
@@ -39,9 +39,17 @@ function SocketIO() {if (!socket) {loadScript('/pp/socket.io/socket.io.js', func
     var i=1;
     function add_break() {return (i++)%3==0?'<div class=br></div>':'';}
     document.getElementById('cards').innerHTML='<div class=cards_container>'+json.cards.reduce(function(a,c){return a+'<div class="card'+((c==current_vote)?' card_active':'')+'" onclick=set(undefined,\''+c+'\')>'+c+'</div>'+add_break()},'')+'</div><div class=br></div>';
-    document.getElementById('players').innerHTML=json.players.reduce(function(a,c){return a+'<div class="players_vote'+(c.vote?' voted':'')+'">'+((json.hidden==false)||(c.id==socket.id)?c.vote||'&nbsp;':'&nbsp;')+'</div><div class="player'+((c.id==socket.id)?' player_active':'')+'">'+(c.name||'')+'</div>'},'')+'';
+    
+    document.getElementById('players').innerHTML=json.players.reduce(function(a,c){
+      return a+'<div id="vote_'+c.id+'" class="players_vote'+(c.vote?' voted':'')+'">'+((json.hidden==false)||(c.id==socket.id)?c.vote||'&nbsp;':'&nbsp;')+'</div><div id="player_'+c.id+'" class="player'+((c.id==socket.id)?' player_active':'')+'">'+(c.name||'&nbsp;')+'</div>'
+    },'')+'';
+    
     document.getElementById('show_button').disabled=(json.hidden==false);
     document.getElementById('deck').value=json.cards;
+
+    // detect changes
+    diff(current_match,json);
+    current_match=json;
   });
 
   socket.on('reconnect', function () {
@@ -54,6 +62,21 @@ function SocketIO() {if (!socket) {loadScript('/pp/socket.io/socket.io.js', func
   });
 
 })}};
+
+function diff(current,updated) {
+  if (current&&updated) {
+    console.log('---'+JSON.stringify(current.players)+'---vs---'+JSON.stringify(updated.players)+'---');
+    // find all players in updated array that are in current
+    updated.players.forEach(function(u){var i=current.players.findIndex(function(c){return u.id==c.id}); if (i>-1){
+      // for each: check if vote has been updated
+      if (u.vote!==current.players[i].vote) {
+        console.log(u.id+' changed vote from '+current.players[i].vote+' to '+u.vote);
+        setTimeout(function(){document.getElementById('player_'+u.id).classList.add('changed')},0);
+        setTimeout(function(){document.getElementById('player_'+u.id).classList.remove('changed')},500);
+      }
+    }})
+  }
+}
 
 function set(name,vote) {
   if (name!==undefined) {current_name=name};
@@ -73,28 +96,36 @@ function leave() {
   socket.emit('leave');
   document.getElementById('screen').innerHTML='ByeBye<p>Left by mistake?<br><button onclick=location.reload()>join again</button>';  
 }
+
+function toggle_admin() {
+  document.getElementById('edit_cards').style.display=(document.getElementById('edit_cards').style.display=='block')?'none':'block';
+}
 </script>
 
 <style>
 	* {box-sizing: border-box;}
 	html, body, section, div, input, button {font-family: Monospace; font-size: 1.4rem;}
-  body {border:0; padding:2%; margin:0; color: #000;}
-  input {width:100%;padding:0.2rem;}
+  body {border:0; padding:2%; margin:0; background-color:#000; color: #fff;}
+  input {width:100%;padding:0.2rem 0.4rem;background-color:#505050;color:#fff;border: 1px solid #ccc; outline-width: 0;}
+  button {width:100%;margin:0.2rem 0;padding:0.2rem;background-color:#505050;color:#fff;cursor:pointer;}
+  button:disabled {background-color:#505050;color:#808080;}
   .bigscreen {}
   .screen {min-width:280px; max-width:420px; margin:auto;}
   .players {}
-  .player {width:84%;background-color:#e0e0e0; padding:0.2rem; margin-bottom:0.2rem;overflow:hidden;white-space: nowrap;}
-  .player_active {background-color:#e0e0e0;}
-  .players_vote {float:right;width:15%;text-align:center;background-color:#e0e0e0;color:#fff;padding:0.2rem; margin-bottom:0.2rem;overflow:hidden;}
-  .voted {background-color:#80e0e0;color:#000;}
-  .cards {padding:2%;}
+  .player {transition:0.5s;min-height:1rem;width:81%;background-color:#505050; padding:0.2rem 0.4rem; margin-bottom:0.2rem;overflow:hidden;white-space: nowrap;}
+  .player_active {}
+  .players_vote {float:right;width:18%;text-align:center;background-color:#505050;color:#fff;padding:0.2rem; margin-bottom:0.2rem;overflow:hidden;}
+  .voted {background-color:#80e080;color:#000;}
+  .changed {transition-timing-function:ease-out; background-color:#80e080;}
+  .cards {padding:8% 2%;}
   .cards_container {margin:auto}
   .card {width:31%;float:left;overflow:hidden;background-color:#505050;color:#fff;font-size:2.5rem;text-align:center;padding:1rem 0;margin:1%;cursor:pointer;}
   .card:hover {background-color:#808080}
-  .card_active {background-color:#80e0e0;color:#000;}
-  .card_active:hover {background-color:#90f0f0;}
+  .card_active {background-color:#80e080;color:#000;}
+  .card_active:hover {background-color:#90f090;}
   .link {text-decoration:underline;cursor:pointer;}
-  .admin {display:none}
+  .admin {clear:both;margin-top:1rem}
+  #edit_cards {display:none;}
   .br {clear:both}
 </style>
 
@@ -105,10 +136,13 @@ function leave() {
     <input type="text" id="name" autocomplete="off" onkeyup="set(this.value)">
     <div id="cards" class="cards"></div>
     <div id="players" class="players"></div>
-    <br>
-    <button id="show_button" onclick="show()">show</button> <button onclick="reset()">reset</button> <button onclick="leave()">leave</button><br><span class=link onclick="document.getElementById('edit_cards').style.display=(document.getElementById('edit_cards').style.display=='block')?'none':'block'">edit cards</span>
-    
-    <div id="edit_cards" class="admin"><form onsubmit="set_room_cards();return false;"><input type="text" id="deck" autocomplete="off"> <button onclick="set_room_cards()">set cards</button></form></div>
+    <br><button id="show_button" onclick="show()">show</button><button onclick="set_room_cards()">reset</button><button onclick="leave()">leave</button>
+    <p><input type="text" id="deck" autocomplete="off">
+<!--
+    <p><span class="link admin" onclick="toggle_admin()">edit cards</span>
+    <div id="edit_cards" class="admin"><form onsubmit="set_room_cards();return false;"><input type="text" id="deck" autocomplete="off"> <button onclick="set_room_cards();toggle_admin();">set cards</button></form></div>
+-->
+
   </div>
 </div>
 </body>
