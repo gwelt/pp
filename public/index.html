@@ -6,7 +6,6 @@
 <link rel="icon" type="image/png" href="images/pp.png">
 <link rel="apple-touch-icon" sizes="180x180" href="images/pp180.png">
 -->
-<link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#000">
 <meta name="Description" content="planning poker">
 <title>planning poker</title>
@@ -14,6 +13,14 @@
 var socket,current_vote,current_match=undefined;
 var default_names = ['Kermit the Frog','Miss Piggy','Fozzie Bear','Gonzo','Rowlf the Dog','Scooter','Animal','Pepe the King Prawn','Rizzo the Rat','Walter','Dr. Teeth','Statler','Waldorf','Bunsen Honeydew','Beaker','The Swedish Chef','Sam Eagle','Camilla the Chicken','Bobo the Bear','Clifford'];
 var current_name=default_names[Math.floor(Math.random()*default_names.length)];
+
+// dynamically add manifest.json because it has to be delivered from subdirectory
+if (1) { //(window.location.pathname.substr(1)) {
+  link=document.createElement('link');
+  link.href=window.location.pathname.substr(1)+'/manifest.json';
+  link.rel='manifest';
+  document.getElementsByTagName('head')[0].appendChild(link);
+}
 
 function loadScript(src, done) {
   var js = document.createElement('script');
