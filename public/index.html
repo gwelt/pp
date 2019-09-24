@@ -6,6 +6,7 @@
 <link rel="icon" type="image/png" href="images/pp.png">
 <link rel="apple-touch-icon" sizes="180x180" href="images/pp180.png">
 -->
+<link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#000">
 <meta name="Description" content="planning poker">
 <title>planning poker</title>
@@ -65,12 +66,11 @@ function SocketIO() {if (!socket) {loadScript('/pp/socket.io/socket.io.js', func
 
 function diff(current,updated) {
   if (current&&updated) {
-    console.log('---'+JSON.stringify(current.players)+'---vs---'+JSON.stringify(updated.players)+'---');
     // find all players in updated array that are in current
     updated.players.forEach(function(u){var i=current.players.findIndex(function(c){return u.id==c.id}); if (i>-1){
       // for each: check if vote has been updated
       if (u.vote!==current.players[i].vote) {
-        console.log(u.id+' changed vote from '+current.players[i].vote+' to '+u.vote);
+        //console.log(u.id+' changed vote from '+current.players[i].vote+' to '+u.vote);
         setTimeout(function(){document.getElementById('player_'+u.id).classList.add('changed')},0);
         setTimeout(function(){document.getElementById('player_'+u.id).classList.remove('changed')},500);
       }

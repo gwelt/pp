@@ -6,6 +6,7 @@ var io = require('socket.io').listen(server, {'path': '/pp/socket.io'});
 var path = require('path');
 var PORT = process.env.PORT || 3008;
 server.listen(PORT, function() {process.stdout.write(`\x1b[44m SERVER LISTENING ON PORT ${ PORT } \x1b[0m \n`)});
+app.use('/:a?/:b?/:c?/manifest.json',function(req,res) {res.sendFile(path.join(__dirname,'public','manifest.json'))});
 app.use(function(req,res) {res.sendFile(path.join(__dirname,'public','index.html'))});
 let default_cards = '?,0,1,2,3,5,8,13,20';
 
