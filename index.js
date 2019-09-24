@@ -6,7 +6,22 @@ var io = require('socket.io').listen(server, {'path': '/pp/socket.io'});
 var path = require('path');
 var PORT = process.env.PORT || 3008;
 server.listen(PORT, function() {process.stdout.write(`\x1b[44m SERVER LISTENING ON PORT ${ PORT } \x1b[0m \n`)});
-app.use('/:a?/:b?/:c?/manifest.json',function(req,res) {res.sendFile(path.join(__dirname,'public','manifest.json'))});
+app.use('/:path?/:id?/manifest.json', function (req, res) {
+  //let id=(req.params.id)||'';
+  res.json({
+    "short_name": "planning poker",
+    "name": "planning poker",
+    "icons": [
+      {"src": "/images/pp192.png","sizes": "192x192","type": "image/png"},
+      {"src": "/images/pp512.png","sizes": "512x512","type": "image/png"},
+      {"src": "/images/pp1024.png","sizes": "1024x1024","type": "image/png"}
+    ],
+    "start_url": '/'+(req.params.path?req.params.path+'/':'')+(req.params.id||''),
+    "background_color": "#000",
+    "theme_color": "#000",
+    "display": "standalone"
+  });
+});
 app.use(function(req,res) {res.sendFile(path.join(__dirname,'public','index.html'))});
 let default_cards = '?,0,1,2,3,5,8,13,20';
 
