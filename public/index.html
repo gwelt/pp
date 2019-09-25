@@ -13,13 +13,12 @@
 <script>
 var socket,current_vote,current_match=undefined;
 var default_names = ['Kermit the Frog','Miss Piggy','Fozzie Bear','Gonzo','Rowlf the Dog','Scooter','Animal','Pepe the King Prawn','Rizzo the Rat','Walter','Dr. Teeth','Statler','Waldorf','Bunsen Honeydew','Beaker','The Swedish Chef','Sam Eagle','Camilla the Chicken','Bobo the Bear','Clifford'];
-var current_name=default_names[Math.floor(Math.random()*default_names.length)];
+var current_name=getCookie('ppname')||default_names[Math.floor(Math.random()*default_names.length)];
 
 // dynamically add manifest.json because it has to be delivered from subdirectory
 if (1) { //(window.location.pathname.substr(1)) {
   link=document.createElement('link');
   link.href=window.location.pathname+(window.location.pathname.length>4?'/':'')+'manifest.json';
-  console.log(link.href);
   link.rel='manifest';
   document.getElementsByTagName('head')[0].appendChild(link);
 }
@@ -41,20 +40,33 @@ function SocketIO() {if (!socket) {loadScript('/pp/socket.io/socket.io.js', func
   });
 
   socket.on('reset', function () {
-    set(undefined,'');  
+    set(undefined,'');
+    document.getElementById('deck').style.display='none';document.getElementById('subline').style.display='block';
   });
 
   socket.on('about:match', function (json) {
-  	console.log(JSON.stringify(json));
+  	//console.log(JSON.stringify(json));
     var i=1;
     function add_break() {return (i++)%3==0?'<div class=br></div>':'';}
-    document.getElementById('cards').innerHTML='<div class=cards_container>'+json.cards.reduce(function(a,c){return a+'<div class="card'+((c==current_vote)?' card_active':'')+'" onclick=set(undefined,\''+c+'\')>'+c+'</div>'+add_break()},'')+'</div><div class=br></div>';
+    document.getElementById('cards').innerHTML='<div class=cards_container>'+json.cards.reduce(function(a,c){return a+'<div class="card'+((c==current_vote)?' card_active':'')+'" onclick=set(undefined,\''+c+'\')>'+(c||'&nbsp;')+'</div>'+add_break()},'')+'</div><div class=br></div>';
     
+    var votes=[];
     document.getElementById('players').innerHTML=json.players.reduce(function(a,c){
+      votes.push(c.vote);
       return a+'<div id="vote_'+c.id+'" class="players_vote'+(c.vote?' voted':'')+'">'+((json.hidden==false)||(c.id==socket.id)?c.vote||'&nbsp;':'&nbsp;')+'</div><div id="player_'+c.id+'" class="player'+((c.id==socket.id)?' player_active':'')+'">'+(c.name||'&nbsp;')+'</div>'
     },'')+'';
-    
+
     document.getElementById('show_button').disabled=(json.hidden==false);
+    document.getElementById('show_button').style.display=(json.hidden==false)?'none':'block';
+    document.getElementById('results').style.display=(json.hidden!==false)?'none':'block';
+
+    if ((votes.length>1)&&(votes.every(function(val,i,arr){return val===arr[0]}))) {document.getElementById('results').innerHTML='CONSENSUS!'} else {
+      votes=votes.filter(function(v){return !isNaN(v)});
+      var median=calc_median(votes);
+      var average=(votes.reduce(function(a,c){return (a+c*1)},0)/votes.length).toFixed(1);
+      document.getElementById('results').innerHTML=((median!==undefined)?('median '+median):'&nbsp;')+'<span class=ar>&Oslash; '+((average=='NaN')?'0':average)+'</span>';
+    }
+
     document.getElementById('deck').value=json.cards;
 
     // detect changes
@@ -87,6 +99,14 @@ function diff(current,updated) {
   }
 }
 
+function calc_median(array) {
+  array.sort(function(a, b) {
+    return a - b;
+  });
+  var mid = array.length / 2;
+  return (array.length>2)?(mid % 1 ? array[mid - 0.5] : (array[mid - 1] + array[mid]) / 2):undefined;
+};
+
 function set(name,vote) {
   if (name!==undefined) {current_name=name};
   if (vote!==undefined) {current_vote=vote};
@@ -103,11 +123,72 @@ function reset() {
 }
 function leave() {
   socket.emit('leave');
-  document.getElementById('screen').innerHTML='ByeBye<p>Left by mistake?<br><button onclick=location.reload()>join again</button>';  
+  var cookie_question='<p><div id=cookie_question><p>Have a cookie and I\'ll remember your name, '+current_name+'!<p><button id="remember" onclick="setCookie(\'ppname\',\''+current_name+'\',30);">get the cookie</button></div>';
+  if (getCookie('ppname')==current_name) {cookie_question=''}
+  document.getElementById('screen').innerHTML='<h1>Hope you enjoyed the show!</h1>'+cookie_question+'<p>Left by mistake?<p><button onclick=location.reload()>join again</button>';  
 }
 
-function toggle_admin() {
-  document.getElementById('edit_cards').style.display=(document.getElementById('edit_cards').style.display=='block')?'none':'block';
+function setCookie(cname, cvalue, exdays) {
+  var d = new Date();
+  d.setTime(d.getTime() + (exdays*24*60*60*1000));
+  var expires = "expires="+ d.toUTCString();
+  document.cookie = cname + "=" + cvalue + ";" + expires + ";path=/";
+  document.getElementById('remember').innerHTML='Yummy!';
+}
+
+function getCookie(cname) {
+  var name = cname + "=";
+  var decodedCookie = decodeURIComponent(document.cookie);
+  var ca = decodedCookie.split(';');
+  for(var i = 0; i <ca.length; i++) {
+    var c = ca[i];
+    while (c.charAt(0) == ' ') {
+      c = c.substring(1);
+    }
+    if (c.indexOf(name) == 0) {
+      return c.substring(name.length, c.length);
+    }
+  }
+  return "";
+}
+
+// ==========================
+// POLYFILLS
+// ==========================
+
+if (!Array.prototype.filter) {
+  Array.prototype.filter = function(func, thisArg) {
+    'use strict';
+    if ( ! ((typeof func === 'Function' || typeof func === 'function') && this) )
+        throw new TypeError();
+    
+    var len = this.length >>> 0,
+        res = new Array(len), // preallocate array
+        t = this, c = 0, i = -1;
+    if (thisArg === undefined) {
+      while (++i !== len){
+        // checks to see if the key was set
+        if (i in this){
+          if (func(t[i], i, t)){
+            res[c++] = t[i];
+          }
+        }
+      }
+    }
+    else{
+      while (++i !== len){
+        // checks to see if the key was set
+        if (i in this){
+          if (func.call(thisArg, t[i], i, t)){
+            res[c++] = t[i];
+          }
+        }
+      }
+    }
+    
+    res.length = c; // shrink down array to proper size
+    return res;
+  };
 }
 
 // https://tc39.github.io/ecma262/#sec-array.prototype.findindex
@@ -156,49 +237,117 @@ if (!Array.prototype.findIndex) {
     writable: true
   });
 }
+
+if (!Array.prototype.every) {
+  Array.prototype.every = function(callbackfn, thisArg) {
+    'use strict';
+    var T, k;
+
+    if (this == null) {
+      throw new TypeError('this is null or not defined');
+    }
+
+    // 1. Let O be the result of calling ToObject passing the this 
+    //    value as the argument.
+    var O = Object(this);
+
+    // 2. Let lenValue be the result of calling the Get internal method
+    //    of O with the argument "length".
+    // 3. Let len be ToUint32(lenValue).
+    var len = O.length >>> 0;
+
+    // 4. If IsCallable(callbackfn) is false, throw a TypeError exception.
+    if (typeof callbackfn !== 'function' && Object.prototype.toString.call(callbackfn) !== '[object Function]') {
+      throw new TypeError();
+    }
+
+    // 5. If thisArg was supplied, let T be thisArg; else let T be undefined.
+    if (arguments.length > 1) {
+      T = thisArg;
+    }
+
+    // 6. Let k be 0.
+    k = 0;
+
+    // 7. Repeat, while k < len
+    while (k < len) {
+
+      var kValue;
+
+      // a. Let Pk be ToString(k).
+      //   This is implicit for LHS operands of the in operator
+      // b. Let kPresent be the result of calling the HasProperty internal 
+      //    method of O with argument Pk.
+      //   This step can be combined with c
+      // c. If kPresent is true, then
+      if (k in O) {
+        var testResult;
+        // i. Let kValue be the result of calling the Get internal method
+        //    of O with argument Pk.
+        kValue = O[k];
+
+        // ii. Let testResult be the result of calling the Call internal method 
+        // of callbackfn with T as the this value if T is not undefined 
+        // else is the result of calling callbackfn 
+        // and argument list containing kValue, k, and O.
+        if(T) testResult = callbackfn.call(T, kValue, k, O); 
+        else testResult = callbackfn(kValue,k,O)
+
+        // iii. If ToBoolean(testResult) is false, return false.
+        if (!testResult) {
+          return false;
+        }
+      }
+      k++;
+    }
+    return true;
+  };
+}
+
 </script>
 
 <style>
 	* {box-sizing: border-box;}
-	html, body, section, div, input, button {font-family: Monospace; font-size: 1.4rem;}
-  body {border:0; padding:2%; margin:0; background-color:#000; color: #fff;}
-  input {width:100%;padding:0.2rem 0.4rem;background-color:#505050;color:#fff;border: 1px solid #ccc; outline-width: 0;}
-  button {width:100%;margin:0.2rem 0;padding:0.2rem;background-color:#505050;color:#fff;cursor:pointer;}
+	html, body, section, div, input, button {border-radius: 0.2rem;font-family: Monospace; font-size: 1.25rem;}
+  body {border:0; padding:0%; margin:0; background-color:#202020; color: #fff;}
+  input {width:100%;padding:0.2rem 0.4rem; padding:0.2rem 0.4rem; margin:0.2rem 0; background-color:#202020;color:#c0c0c0;border: 1px solid #505050; outline-width: 0;}
+  #name {margin:0;}
+  button {border: 2px solid #808080;outline-width: 0;width:100%;padding:0.2rem 0.4rem; margin:0.2rem 0; background-color:#505050;color:#fff;cursor:pointer;}
   button:disabled {background-color:#505050;color:#808080;}
-  .bigscreen {}
+  .bigscreen {background-color:#202020; padding:0.8rem; margin:0;}
   .screen {min-width:280px; max-width:420px; margin:auto;}
   .players {}
-  .player {transition:0.5s;min-height:1rem;width:81%;background-color:#505050; padding:0.2rem 0.4rem; margin-bottom:0.2rem;overflow:hidden;white-space: nowrap;}
+  .player {border-radius: 0.2rem 0 0 0.2rem;transition:0.5s;min-height:1rem;width:81%;background-color:#505050; padding:0.2rem 0.4rem; margin-bottom:0.2rem;overflow:hidden;white-space: nowrap;}
   .player_active {}
-  .players_vote {float:right;width:18%;text-align:center;background-color:#505050;color:#fff;padding:0.2rem; margin-bottom:0.2rem;overflow:hidden;}
+  .players_vote {border-radius: 0 0.2rem 0.2rem 0;float:right;width:18%;text-align:center;background-color:#505050;color:#fff;padding:0.2rem; margin-bottom:0.2rem;overflow:hidden;}
   .voted {background-color:#80e080;color:#000;}
   .changed {transition-timing-function:ease-out; background-color:#80e080;}
-  .cards {padding:8% 2%;}
+  .results {border: 2px solid #202020;width:100%;padding:0.2rem 0.4rem; margin:0.2rem 0; background-color:#202020; color:#fff;}
+  .subline {border: 2px solid #202020;width:100%;padding:0.2rem 0.4rem; margin:0.2rem 0; background-color:#202020; color:#fff; font-size:0.8rem; text-align:center;}
+  .cards {padding:1rem 0.1rem;}
   .cards_container {margin:auto}
-  .card {width:31%;float:left;overflow:hidden;background-color:#505050;color:#fff;font-size:2.5rem;text-align:center;padding:1rem 0;margin:1%;cursor:pointer;}
+  .card {width:31%;float:left;overflow:hidden;background-color:#505050;color:#fff;font-size:2rem;text-align:center;padding:1rem 0;margin:1%;cursor:pointer;}
   .card:hover {background-color:#808080}
   .card_active {background-color:#80e080;color:#000;}
   .card_active:hover {background-color:#90f090;}
   .link {text-decoration:underline;cursor:pointer;}
+  .link_nounderline {cursor:pointer;}
   .admin {clear:both;margin-top:1rem}
-  #edit_cards {display:none;}
+  #deck {display:none;}
   .br {clear:both}
+  .ar {float:right}
 </style>
 
 </head>
 <body>
 <div id="bigscreen" class="bigscreen">
   <div id="screen" class="screen">
-    <input type="text" id="name" autocomplete="off" onkeyup="set(this.value)">
+    <input type="text" id="name" autocomplete="off" placeholder="your name" onkeyup="set(this.value)">
     <div id="cards" class="cards"></div>
     <div id="players" class="players"></div>
-    <br><button id="show_button" onclick="show()">show</button><button onclick="set_room_cards()">reset</button><button onclick="leave()">leave</button>
-    <p><input type="text" id="deck" autocomplete="off">
-<!--
-    <p><span class="link admin" onclick="toggle_admin()">edit cards</span>
-    <div id="edit_cards" class="admin"><form onsubmit="set_room_cards();return false;"><input type="text" id="deck" autocomplete="off"> <button onclick="set_room_cards();toggle_admin();">set cards</button></form></div>
--->
-
+    <br><div id="results" class="results"></div><button id="show_button" onclick="show()">show</button><button onclick="set_room_cards()">reset</button><button onclick="leave()">leave</button>
+    <div id="subline" class="subline">&nbsp;<span class="link_nounderline" onclick="document.getElementById('deck').style.display='block';document.getElementById('subline').style.display='none';">click here to edit the list of cards</span>&nbsp;</div>
+    <input type="text" id="deck" autocomplete="off" placeholder="list of cards">
   </div>
 </div>
 </body>
