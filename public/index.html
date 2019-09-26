@@ -45,32 +45,28 @@ function SocketIO() {if (!socket) {loadScript('/pp/socket.io/socket.io.js', func
   });
 
   socket.on('about:match', function (json) {
-  	//console.log(JSON.stringify(json));
+  	console.log(JSON.stringify(json));
     var i=1;
     function add_break() {return (i++)%3==0?'<div class=br></div>':'';}
     document.getElementById('cards').innerHTML='<div class=cards_container>'+json.cards.reduce(function(a,c){return a+'<div class="card'+((c==current_vote)?' card_active':'')+'" onclick=set(undefined,\''+c+'\')>'+(c||'&nbsp;')+'</div>'+add_break()},'')+'</div><div class=br></div>';
-    
-    var votes=[];
-    document.getElementById('players').innerHTML=json.players.reduce(function(a,c){
-      votes.push(c.vote);
-      return a+'<div id="vote_'+c.id+'" class="players_vote'+(c.vote?' voted':'')+'">'+((json.hidden==false)||(c.id==socket.id)?c.vote||'&nbsp;':'&nbsp;')+'</div><div id="player_'+c.id+'" class="player'+((c.id==socket.id)?' player_active':'')+'">'+(c.name||'&nbsp;')+'</div>'
-    },'')+'';
-
     document.getElementById('show_button').disabled=(json.hidden==false);
     document.getElementById('show_button').style.display=(json.hidden==false)?'none':'block';
     document.getElementById('results').style.display=(json.hidden!==false)?'none':'block';
+    document.getElementById('deck').value=json.cards;
+    
+    // compare and update players
+    update_players(current_match,json);
+    // detect and mark changes
+    diff(current_match,json);
 
-    if ((votes.length>1)&&(votes.every(function(val,i,arr){return val===arr[0]}))) {document.getElementById('results').innerHTML='CONSENSUS!'} else {
+    // update statistics
+    var votes=[];
+    json.players.forEach(function(p){votes.push(p.vote)});
+    if ((votes.length>0)&&(votes.every(function(val,i,arr){return val===arr[0]}))) {document.getElementById('results').innerHTML='CONSENSUS!'} else {
       votes=votes.filter(function(v){return !isNaN(v)});
-      var median=calc_median(votes);
-      var average=(votes.reduce(function(a,c){return (a+c*1)},0)/votes.length).toFixed(1);
-      document.getElementById('results').innerHTML=((median!==undefined)?('median '+median):'&nbsp;')+'<span class=ar>&Oslash; '+((average=='NaN')?'0':average)+'</span>';
+      document.getElementById('results').innerHTML='median '+median(votes)+'<span class=ar>&Oslash; '+average(votes)+'</span>';
     }
 
-    document.getElementById('deck').value=json.cards;
-
-    // detect changes
-    diff(current_match,json);
     current_match=json;
   });
 
@@ -84,6 +80,43 @@ function SocketIO() {if (!socket) {loadScript('/pp/socket.io/socket.io.js', func
   });
 
 })}};
+
+function update_players(current,updated) {
+  // parse all players in updated data
+  updated.players.forEach(function(u){
+    // insert new row at the end if u is not in current list
+    if ((current==undefined)||(!current.players.find(function(c){return c.id==u.id}))) {
+      var node = document.createElement("div");
+      node.id='container_'+u.id;
+      node.classList='br player_container';
+      document.getElementById("players").appendChild(node);
+      //if (u.id!==socket.id) {
+        node.innerHTML+='<div id="vote_'+u.id+'"></div><div id="player_'+u.id+'"></div>';
+      //} else {
+      //  node.innerHTML+='<div id="vote_'+u.id+'"></div><div id="player_'+u.id+'"><input style="display:none" class="player player_input" type="text" id="name" autocomplete="off" placeholder="your name" onkeyup="set(this.value)" value="'+(current_name||'')+'"></div>';
+      //}
+    }
+    // update values in divs
+    if (u.id==socket.id) {current_name=u.name};
+    compare_and_update(u.name||'&nbsp;','player_'+u.id);
+    compare_and_update(((updated.hidden==false)||(u.id==socket.id)?u.vote||'&nbsp;':'&nbsp;'),'vote_'+u.id);
+    document.getElementById('vote_'+u.id).classList='players_vote'+(u.vote?' voted':'');
+    document.getElementById('player_'+u.id).classList='player'; //+((u.id==socket.id)?' player_active':'');
+  });
+  // delete all players rows that are in current but missing in updated
+  if (current!==undefined) {
+    var elemIDs_to_delete = current.players.filter(function(c){return !updated.players.find(function(u){return c.id==u.id})});
+    elemIDs_to_delete.forEach(function(c){
+      var e=document.getElementById('container_'+c.id);
+      e.parentNode.removeChild(e); // or document.getElementById(elementID).remove();
+    });
+  }
+}
+
+function compare_and_update(value,elementID) {
+  var e=document.getElementById(elementID);
+  if (e.innerHTML!==value) {e.innerHTML=value||'&nbsp;'};
+}
 
 function diff(current,updated) {
   if (current&&updated) {
@@ -99,12 +132,15 @@ function diff(current,updated) {
   }
 }
 
-function calc_median(array) {
-  array.sort(function(a, b) {
-    return a - b;
-  });
+function average(array) {
+  var res=(array.reduce(function(a,c){return (a+c*1)},0)/array.length).toFixed(1);
+  return (isNaN(res)?0:res);
+}
+function median(array) {
+  array.sort(function(a, b) {return a - b});
   var mid = array.length / 2;
-  return mid % 1 ? array[mid - 0.5] : (array[mid - 1]*1 + array[mid]*1) / 2;
+  var res = mid % 1 ? array[mid - 0.5] : (array[mid - 1]*1 + array[mid]*1) / 2;
+  return (isNaN(res)?0:res);
 };
 
 function set(name,vote) {
@@ -123,9 +159,9 @@ function reset() {
 }
 function leave() {
   socket.emit('leave');
-  var cookie_question='<p><div id=cookie_question><p>Have a cookie and I\'ll remember your name, '+current_name+'!<p><button id="remember" onclick="setCookie(\'ppname\',\''+current_name+'\',30);">get the cookie</button></div>';
+  var cookie_question='<p><div id=cookie_question><p>Have a cookie and I\'ll remember your name, '+(current_name||'')+'!<button id="remember" class="byebye" onclick="setCookie(\'ppname\',\''+(current_name||'')+'\',30);">get the cookie</button></div>';
   if (getCookie('ppname')==current_name) {cookie_question=''}
-  document.getElementById('screen').innerHTML='<h1>Hope you enjoyed the show!</h1>'+cookie_question+'<p>Left by mistake?<p><button onclick=location.reload()>join again</button>';  
+  document.getElementById('screen').innerHTML='<h1>Hope you enjoyed the show!</h1>'+cookie_question+'<p>Left by mistake?<button class="byebye" onclick=location.reload()>join again</button>';  
 }
 
 function setCookie(cname, cvalue, exdays) {
@@ -314,11 +350,12 @@ if (!Array.prototype.every) {
   #name {margin:0;}
   button {border: 2px solid #808080;outline-width: 0;width:100%;padding:0.2rem 0.4rem; margin:0.2rem 0; background-color:#505050;color:#fff;cursor:pointer;}
   button:disabled {background-color:#505050;color:#808080;}
-  .bigscreen {background-color:#202020; padding:0.8rem; margin:0;}
+  .bigscreen {background-color:#202020; padding:1.4rem; margin:0;}
   .screen {min-width:280px; max-width:420px; margin:auto;}
   .players {}
   .player {border-radius: 0.2rem 0 0 0.2rem;transition:0.5s;min-height:1rem;width:81%;background-color:#505050; padding:0.2rem 0.4rem; margin-bottom:0.2rem;overflow:hidden;white-space: nowrap;}
-  .player_active {}
+  .player_input {font-size:1rem}
+  .player_container{}
   .players_vote {border-radius: 0 0.2rem 0.2rem 0;float:right;width:18%;text-align:center;background-color:#505050;color:#fff;padding:0.2rem; margin-bottom:0.2rem;overflow:hidden;}
   .voted {background-color:#80e080;color:#000;}
   .changed {transition-timing-function:ease-out; background-color:#80e080;}
@@ -336,6 +373,7 @@ if (!Array.prototype.every) {
   #deck {display:none;}
   .br {clear:both}
   .ar {float:right}
+  .byebye {margin:0.8rem 0 1rem 0}
 </style>
 
 </head>
