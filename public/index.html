@@ -104,7 +104,7 @@ function calc_median(array) {
     return a - b;
   });
   var mid = array.length / 2;
-  return (array.length>2)?(mid % 1 ? array[mid - 0.5] : (array[mid - 1]*1 + array[mid]*1) / 2):undefined;
+  return mid % 1 ? array[mid - 0.5] : (array[mid - 1]*1 + array[mid]*1) / 2;
 };
 
 function set(name,vote) {
