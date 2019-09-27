@@ -46,28 +46,32 @@ function SocketIO() {if (!socket) {loadScript('/pp/socket.io/socket.io.js', func
 
   socket.on('about:match', function (json) {
   	console.log(JSON.stringify(json));
-    var i=1;
-    function add_break() {return (i++)%3==0?'<div class=br></div>':'';}
-    document.getElementById('cards').innerHTML='<div class=cards_container>'+json.cards.reduce(function(a,c){return a+'<div class="card'+((c==current_vote)?' card_active':'')+'" onclick=set(undefined,\''+c+'\')>'+(c||'&nbsp;')+'</div>'+add_break()},'')+'</div><div class=br></div>';
-    document.getElementById('show_button').disabled=(json.hidden==false);
-    document.getElementById('show_button').style.display=(json.hidden==false)?'none':'block';
-    document.getElementById('results').style.display=(json.hidden!==false)?'none':'block';
-    document.getElementById('deck').value=json.cards;
-    
-    // compare and update players
-    update_players(current_match,json);
-    // detect and mark changes
-    diff(current_match,json);
+  	if ((!current_match)||(current_match.lastchange<json.lastchange))
+  	{
 
-    // update statistics
-    var votes=[];
-    json.players.forEach(function(p){votes.push(p.vote)});
-    if ((votes.length>0)&&(votes.every(function(val,i,arr){return val===arr[0]}))) {document.getElementById('results').innerHTML='CONSENSUS!'} else {
-      votes=votes.filter(function(v){return !isNaN(v)});
-      document.getElementById('results').innerHTML='median '+median(votes)+'<span class=ar>&Oslash; '+average(votes)+'</span>';
-    }
+	    document.getElementById('show_button').disabled=(json.hidden==false);
+	    document.getElementById('show_button').style.display=(json.hidden==false)?'none':'block';
+	    document.getElementById('results').style.display=(json.hidden!==false)?'none':'block';
+	    document.getElementById('deck').value=json.cards;
 
-    current_match=json;
+	    // update deck
+	    update_deck(current_match,json)    
+	    // compare and update players
+	    update_players(current_match,json);
+	    // detect and mark changes
+	    diff(current_match,json);
+
+	    // update statistics
+	    var votes=[];
+	    json.players.forEach(function(p){votes.push(p.vote)});
+	    if ((votes.length>0)&&(votes.every(function(val,i,arr){return val===arr[0]}))) {document.getElementById('results').innerHTML='CONSENSUS!'} else {
+	      votes=votes.filter(function(v){return !isNaN(v)});
+	      document.getElementById('results').innerHTML='median '+median(votes)+'<span class=ar>&Oslash; '+average(votes)+'</span>';
+	    }
+
+	    current_match=json;
+   	}
+
   });
 
   socket.on('reconnect', function () {
@@ -81,33 +85,35 @@ function SocketIO() {if (!socket) {loadScript('/pp/socket.io/socket.io.js', func
 
 })}};
 
+function update_deck(current,updated) {
+	var i=1;
+	function add_break() {return (i++)%3==0?'<div class=br></div>':'';}
+	document.getElementById('cards').innerHTML='<div class=cards_container>'+updated.cards.reduce(function(a,c){return a+'<div class="card'+((c==current_vote)?' card_active':'')+'" onclick=set(undefined,\''+c+'\')>'+(c||'&nbsp;')+'</div>'+add_break()},'')+'</div><div class=br></div>';
+}
+
 function update_players(current,updated) {
   // parse all players in updated data
   updated.players.forEach(function(u){
     // insert new row at the end if u is not in current list
     if ((current==undefined)||(!current.players.find(function(c){return c.id==u.id}))) {
       var node = document.createElement("div");
-      node.id='container_'+u.id;
+      node.id='player_container_'+u.id;
       node.classList='br player_container';
       document.getElementById("players").appendChild(node);
-      //if (u.id!==socket.id) {
-        node.innerHTML+='<div class="players_vote" id="vote_'+u.id+'"></div><div class="player" id="player_'+u.id+'"></div>';
-      //} else {
-      //  node.innerHTML+='<div id="vote_'+u.id+'"></div><div id="player_'+u.id+'"><input style="display:none" class="player player_input" type="text" id="name" autocomplete="off" placeholder="your name" onkeyup="set(this.value)" value="'+(current_name||'')+'"></div>';
-      //}
+      node.innerHTML+='<div class="players_vote" id="vote_'+u.id+'"></div><div class="player" id="player_'+u.id+'"></div>';
     }
     // update values in divs
     if (u.id==socket.id) {current_name=u.name};
     compare_and_update(u.name||'&nbsp;','player_'+u.id);
     compare_and_update(((updated.hidden==false)||(u.id==socket.id)?u.vote||'&nbsp;':'&nbsp;'),'vote_'+u.id);
     document.getElementById('vote_'+u.id).className='players_vote'+(u.vote?' voted':'');
-    document.getElementById('player_'+u.id).className='player'; //+((u.id==socket.id)?' player_active':'');
+    //document.getElementById('player_'+u.id).className='player'; //+((u.id==socket.id)?' player_active':'');
   });
   // delete all players rows that are in current but missing in updated
   if (current!==undefined) {
     var elemIDs_to_delete = current.players.filter(function(c){return !updated.players.find(function(u){return c.id==u.id})});
     elemIDs_to_delete.forEach(function(c){
-      var e=document.getElementById('container_'+c.id);
+      var e=document.getElementById('player_container_'+c.id);
       e.parentNode.removeChild(e); // or document.getElementById(elementID).remove();
     });
   }
@@ -401,11 +407,10 @@ if (!Array.prototype.find) {
   .screen {min-width:280px; max-width:420px; margin:auto;}
   .players {}
   .player {border-radius: 0.2rem 0 0 0.2rem;transition:0.5s;min-height:1rem;width:81%;background-color:#505050; padding:0.2rem 0.4rem; margin-bottom:0.2rem;overflow:hidden;white-space: nowrap;}
-  .player_input {font-size:1rem}
-  .player_container{}
+  .player_container{transition:0.5s;}
+  .changed {transition-timing-function:ease-out; background-color:#80e080;}
   .players_vote {border-radius: 0 0.2rem 0.2rem 0;float:right;width:18%;text-align:center;background-color:#505050;color:#fff;padding:0.2rem; margin-bottom:0.2rem;overflow:hidden;}
   .voted {background-color:#80e080;color:#000;}
-  .changed {transition-timing-function:ease-out; background-color:#80e080;}
   .results {border: 2px solid #202020;width:100%;padding:0.2rem 0.4rem; margin:0.2rem 0; background-color:#202020; color:#fff;}
   .subline {border: 2px solid #202020;width:100%;padding:0.2rem 0.4rem; margin:0.2rem 0; background-color:#202020; color:#fff; font-size:0.8rem; text-align:center;}
   .cards {padding:1rem 0.1rem;}
