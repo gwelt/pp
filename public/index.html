@@ -91,7 +91,7 @@ function update_players(current,updated) {
       node.classList='br player_container';
       document.getElementById("players").appendChild(node);
       //if (u.id!==socket.id) {
-        node.innerHTML+='<div id="vote_'+u.id+'"></div><div id="player_'+u.id+'"></div>';
+        node.innerHTML+='<div class="players_vote" id="vote_'+u.id+'"></div><div class="player" id="player_'+u.id+'"></div>';
       //} else {
       //  node.innerHTML+='<div id="vote_'+u.id+'"></div><div id="player_'+u.id+'"><input style="display:none" class="player player_input" type="text" id="name" autocomplete="off" placeholder="your name" onkeyup="set(this.value)" value="'+(current_name||'')+'"></div>';
       //}
