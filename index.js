@@ -76,9 +76,9 @@ function leave(socket,room) {
 }
 
 function set(socket,name,vote) {
-	socket.name=(name!==''?name:undefined);
-	socket.vote=(vote!==''?vote:undefined);
 	if ( ((socket.name!==name)&&(name!==undefined)) || ((socket.vote!==vote)&&(vote!==undefined)) ) {
+		socket.name=(name!==''?name:undefined);
+		socket.vote=(vote!==''?vote:undefined);
 		update_about_match(socket.current_room);
 	}
 }
