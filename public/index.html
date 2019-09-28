@@ -54,10 +54,10 @@ function SocketIO() {if (!socket) {loadScript('/pp/socket.io/socket.io.js', func
 	    document.getElementById('results').style.display=(json.hidden!==false)?'none':'block';
 	    document.getElementById('deck').value=json.cards;
 
-	    // update deck
-	    update_deck(current_match,json)    
 	    // compare and update players
 	    update_players(current_match,json);
+      // update deck
+      update_deck(current_match,json)    
 	    // detect and mark changes
 	    diff(current_match,json);
 
@@ -103,7 +103,7 @@ function update_players(current,updated) {
       node.innerHTML+='<div class="players_vote" id="vote_'+u.id+'"></div><div class="player" id="player_'+u.id+'"></div>';
     }
     // update values in divs
-    if (u.id==socket.id) {current_name=u.name};
+    if (u.id==socket.id) {current_name=u.name;current_vote=current_vote||u.vote};
     compare_and_update(u.name||'&nbsp;','player_'+u.id);
     compare_and_update(((updated.hidden==false)||(u.id==socket.id)?u.vote||'&nbsp;':'&nbsp;'),'vote_'+u.id);
     document.getElementById('vote_'+u.id).className='players_vote'+(u.vote?' voted':'');
