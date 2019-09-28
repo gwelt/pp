@@ -76,7 +76,6 @@ function SocketIO() {if (!socket) {loadScript('/pp/socket.io/socket.io.js', func
 
   socket.on('reconnect', function () {
     console.log('RECONNECTED!');
-    //set(undefined,'');
   });
   
   socket.on('disconnect', function (reason) {
@@ -103,7 +102,6 @@ function update_players(current,updated) {
       node.innerHTML+='<div class="players_vote" id="vote_'+u.id+'"></div><div class="player" id="player_'+u.id+'"></div>';
     }
     // update values in divs
-    //if (u.id==socket.id) {current_name=u.name;current_vote=current_vote||u.vote};
     compare_and_update(u.name||'&nbsp;','player_'+u.id);
     compare_and_update(((updated.hidden==false)||(u.id==socket.id)?u.vote||'&nbsp;':'&nbsp;'),'vote_'+u.id);
     document.getElementById('vote_'+u.id).className='players_vote'+(u.vote?' voted':'');
@@ -165,6 +163,7 @@ function reset() {
 }
 function leave() {
   socket.emit('leave');
+  current_vote=undefined;
   var cookie_question='<p><div id=cookie_question><p>Have a cookie and I\'ll remember your name, '+(current_name||'')+'!<button id="remember" class="byebye" onclick="setCookie(\'ppname\',\''+(current_name||'')+'\',30);">get the cookie</button></div>';
   if (getCookie('ppname')==current_name) {cookie_question=''}
   document.getElementById('screen').innerHTML='<h1>Hope you enjoyed the show!</h1>'+cookie_question+'<p>Left by mistake?<button class="byebye" onclick=location.reload()>join again</button>';  
