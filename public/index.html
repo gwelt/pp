@@ -41,7 +41,6 @@ function SocketIO() {if (!socket) {loadScript('/pp/socket.io/socket.io.js', func
 
   socket.on('reset', function () {
     set(undefined,'');
-    current_vote=undefined;
     document.getElementById('deck').style.display='none';document.getElementById('subline').style.display='block';
   });
 
@@ -77,7 +76,7 @@ function SocketIO() {if (!socket) {loadScript('/pp/socket.io/socket.io.js', func
 
   socket.on('reconnect', function () {
     console.log('RECONNECTED!');
-  	set();
+    //set(undefined,'');
   });
   
   socket.on('disconnect', function (reason) {
@@ -104,7 +103,7 @@ function update_players(current,updated) {
       node.innerHTML+='<div class="players_vote" id="vote_'+u.id+'"></div><div class="player" id="player_'+u.id+'"></div>';
     }
     // update values in divs
-    if (u.id==socket.id) {current_name=u.name;current_vote=current_vote||u.vote};
+    //if (u.id==socket.id) {current_name=u.name;current_vote=current_vote||u.vote};
     compare_and_update(u.name||'&nbsp;','player_'+u.id);
     compare_and_update(((updated.hidden==false)||(u.id==socket.id)?u.vote||'&nbsp;':'&nbsp;'),'vote_'+u.id);
     document.getElementById('vote_'+u.id).className='players_vote'+(u.vote?' voted':'');
