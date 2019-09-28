@@ -41,6 +41,7 @@ function SocketIO() {if (!socket) {loadScript('/pp/socket.io/socket.io.js', func
 
   socket.on('reset', function () {
     set(undefined,'');
+    current_vote=undefined;
     document.getElementById('deck').style.display='none';document.getElementById('subline').style.display='block';
   });
 
