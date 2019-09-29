@@ -79,7 +79,7 @@ function set(socket,name,vote) {
 	if ( ((socket.name!==name)&&(name!==undefined)) || ((socket.vote!==vote)&&(vote!==undefined)) ) {
 		socket.name=(name!==''?name:undefined);
 		socket.vote=(vote!==''?vote:undefined);
-		update_about_match(socket.current_room);
+		update_about_match(socket.current_room); 
 	}
 }
 
