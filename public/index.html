@@ -45,7 +45,7 @@ function SocketIO() {if (!socket) {loadScript('/pp/socket.io/socket.io.js', func
 	});
 
 	socket.on('about:match', function (json) {
-		console.log(JSON.stringify(json));
+		//console.log(JSON.stringify(json)); // DEBUG
 		if ((!current_match)||(current_match.lastchange<json.lastchange))
 		{
 
@@ -71,7 +71,6 @@ function SocketIO() {if (!socket) {loadScript('/pp/socket.io/socket.io.js', func
 
 			current_match=json;
 		}
-
 	});
 
 	socket.on('reconnect', function () {
@@ -128,7 +127,6 @@ function diff(current,updated) {
 		updated.players.forEach(function(u){var i=current.players.findIndex(function(c){return u.id==c.id}); if (i>-1){
 			// for each: check if vote has been updated
 			if (u.vote!==current.players[i].vote) {
-				//console.log(u.id+' changed vote from '+current.players[i].vote+' to '+u.vote);
 				setTimeout(function(){document.getElementById('player_'+u.id).classList.add('changed')},0);
 				setTimeout(function(){document.getElementById('player_'+u.id).classList.remove('changed')},500);
 			}
@@ -396,32 +394,39 @@ if (!Array.prototype.find) {
 </script>
 
 <style>
+	:root {
+  	--bg:#1c1c1c;
+  	--color:#505050;
+  	--color-hover:#707070;
+  	--highlight-color:#80e080;
+  	--highlight-color-hover:var(--highlight-color);  	
+	}
 	* {box-sizing: border-box;}
 	html, body, section, div, input, button {border-radius: 0.2rem;font-family: Monospace; font-size: 1.25rem;}
-	body {border:0; padding:0%; margin:0; background-color:#202020; color: #fff;}
-	input {width:100%;padding:0.2rem 0.4rem; padding:0.2rem 0.4rem; margin:0.2rem 0; background-color:#202020;color:#c0c0c0;border: 1px solid #505050; outline-width: 0;}
+	body {border:0; padding:0%; margin:0; background-color:var(--bg); color: #fff;}
+	input {width:100%;padding:0.2rem 0.4rem; padding:0.2rem 0.4rem; margin:0.2rem 0; background-color:var(--bg); color:#c0c0c0;border: 1px solid var(--color); outline-width: 0;}
 	#name {margin:0;}
-	button {border: 2px solid #808080;outline-width: 0;width:100%;padding:0.2rem 0.4rem; margin:0.2rem 0; background-color:#505050;color:#fff;cursor:pointer;}
+	button {border: 2px solid var(--color-hover);outline-width: 0;width:100%;padding:0.2rem 0.4rem; margin:0.2rem 0; background-color:var(--color);color:#fff;cursor:pointer;}
 	@media (hover: hover) {
-		button:hover {background-color:#808080}
+		button:hover {background-color:var(--color-hover)}
 	}	
-	button:disabled {background-color:#505050;color:#808080;}
-	.bigscreen {background-color:#202020; padding:1.4rem; margin:0;}
+	button:disabled {background-color:var(--color);color:var(--color-hover);}
+	.bigscreen {padding:1.4rem; margin:0;}
 	.screen {min-width:280px; max-width:420px; margin:auto;}
 	.players {}
-	.player {border-radius: 0.2rem 0 0 0.2rem;transition:0.5s;min-height:1rem;width:81%;background-color:#505050; padding:0.2rem 0.4rem; margin-bottom:0.2rem;overflow:hidden;white-space: nowrap;}
+	.player {border-radius: 0.2rem 0 0 0.2rem;transition:0.5s;min-height:1rem;width:81%;background-color:var(--color); padding:0.2rem 0.4rem; margin-bottom:0.2rem;overflow:hidden;white-space: nowrap;}
 	.player_container{transition:0.5s;}
-	.changed {transition-timing-function:ease-out; background-color:#80e080;}
-	.players_vote {border-radius: 0 0.2rem 0.2rem 0;float:right;width:18%;text-align:center;background-color:#505050;color:#fff;padding:0.2rem; margin-bottom:0.2rem;overflow:hidden;}
-	.voted {background-color:#80e080;color:#000;}
-	.results {border: 2px solid #202020;width:100%;padding:0.2rem 0.4rem; margin:0.2rem 0; background-color:#202020; color:#fff;}
-	.subline {border: 2px solid #202020;width:100%;padding:0.2rem 0.4rem; margin:0.2rem 0; background-color:#202020; color:#fff; font-size:0.8rem; text-align:center;}
+	.changed {transition-timing-function:ease-out; background-color:var(--highlight-color);}
+	.players_vote {border-radius: 0 0.2rem 0.2rem 0;float:right;width:18%;text-align:center;background-color:var(--color);color:#fff;padding:0.2rem; margin-bottom:0.2rem;overflow:hidden;}
+	.voted {background-color:var(--highlight-color);color:#000;}
+	.results {border: 2px solid transparent;width:100%;padding:0.2rem 0.4rem; margin:0.2rem 0; color:#fff;}
+	.subline {border: 2px solid transparent;width:100%;padding:0.2rem 0.4rem; margin:0.2rem 0; color:#fff; font-size:0.8rem; text-align:center;}
 	.cards {padding:1rem 0.1rem;}
 	.cards_container {margin:auto}
-	.card {width:31%;float:left;overflow:hidden;background-color:#505050;color:#fff;font-size:2rem;text-align:center;padding:1rem 0;margin:1%;cursor:pointer;}
-	.card:hover {background-color:#808080}
-	.card_active {background-color:#80e080;color:#000;}
-	.card_active:hover {background-color:#90f090;}
+	.card {width:31%;float:left;overflow:hidden;background-color:var(--color);color:#fff;font-size:2rem;text-align:center;padding:1rem 0;margin:1%;cursor:pointer;}
+	.card:hover {background-color:var(--color-hover)}
+	.card_active {background-color:var(--highlight-color);color:#000;}
+	.card_active:hover {background-color:var(--highlight-color-hover);}
 	.link {text-decoration:underline;cursor:pointer;}
 	.link_nounderline {cursor:pointer;}
 	.admin {clear:both;margin-top:1rem}
