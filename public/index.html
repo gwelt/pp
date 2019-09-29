@@ -160,6 +160,7 @@ function show() {
 }
 function reset() {
 	socket.emit('reset');
+	document.getElementById('reset_button').style.backgroundColor='#ff5050';
 }
 function leave() {
 	socket.emit('leave');
@@ -401,9 +402,9 @@ if (!Array.prototype.find) {
 	input {width:100%;padding:0.2rem 0.4rem; padding:0.2rem 0.4rem; margin:0.2rem 0; background-color:#202020;color:#c0c0c0;border: 1px solid #505050; outline-width: 0;}
 	#name {margin:0;}
 	button {border: 2px solid #808080;outline-width: 0;width:100%;padding:0.2rem 0.4rem; margin:0.2rem 0; background-color:#505050;color:#fff;cursor:pointer;}
-	button:hover {background-color:#808080}
-	button:focus {background-color:#505050}
-	button:active {background-color:#505050}
+	@media (hover: hover) {
+		button:hover {background-color:#808080}
+	}	
 	button:disabled {background-color:#505050;color:#808080;}
 	.bigscreen {background-color:#202020; padding:1.4rem; margin:0;}
 	.screen {min-width:280px; max-width:420px; margin:auto;}
@@ -437,7 +438,7 @@ if (!Array.prototype.find) {
 		<input type="text" id="name" autocomplete="off" placeholder="your name" onkeyup="set(this.value)" onblur="set(this.value)">
 		<div id="cards" class="cards"></div>
 		<div id="players" class="players"></div>
-		<br><div id="results" class="results"></div><button id="show_button" onclick="show()">show</button><button onclick="set_room_cards()">reset</button><button onclick="leave()">leave</button>
+		<br><div id="results" class="results"></div><button id="show_button" onclick="show()">show</button><button id="reset_button" onclick="set_room_cards()">reset</button><button onclick="leave()">leave</button>
 		<div id="subline" class="subline">&nbsp;<span class="link_nounderline" onclick="document.getElementById('deck').style.display='block';document.getElementById('subline').style.display='none';">click here to edit the list of cards</span>&nbsp;</div>
 		<input type="text" id="deck" autocomplete="off" placeholder="list of cards">
 	</div>
