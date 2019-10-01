@@ -108,7 +108,7 @@ function update_about_match(room) {
 			let players = clients.map((c)=>{let u=io.in(room).connected[c]; return {id:u.id,name:u.name,vote:u.vote}});
 			// if we are not waiting for someone to vote, show votes
 			if ( (roomObj.hidden==undefined) && (!clients.find((c)=>{let u=io.in(room).connected[c]; return u.vote==undefined})) ) {roomObj.hidden=false}
-			let lastchange=new Date().getTime();			
+			let lastchange=new Date().getTime()+' '+(++counter%10); // to avoid a race condition
 			io.in(room).emit('about:match',{room:room,cards:roomObj.cards,players:players,lastchange:lastchange,hidden:roomObj.hidden});
 		});		
 	}

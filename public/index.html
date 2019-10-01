@@ -41,11 +41,12 @@ function SocketIO() {if (!socket) {loadScript('/pp/socket.io/socket.io.js', func
 
 	socket.on('reset', function () {
 		set(undefined,'');
+		//setTimeout(()=>{set(undefined,'')},Math.floor(Math.random()*333)); // for a nice effect
 		document.getElementById('deck').style.display='none';document.getElementById('subline').style.display='block';
 	});
 
 	socket.on('about:match', function (json) {
-		//console.log(JSON.stringify(json)); // DEBUG
+		console.log(JSON.stringify(json)); // DEBUG
 		if ((!current_match)||(current_match.lastchange<json.lastchange))
 		{
 
@@ -158,7 +159,6 @@ function show() {
 }
 function reset() {
 	socket.emit('reset');
-	document.getElementById('reset_button').style.backgroundColor='#ff5050';
 }
 function leave() {
 	socket.emit('leave');
