@@ -24,6 +24,7 @@ app.use('/:path?/:id?/manifest.json', function (req, res) {
 });
 app.use(function(req,res) {res.sendFile(path.join(__dirname,'public','index.html'))});
 let default_cards = '?,0,1,2,3,5,8,13,20';
+let counter=0;
 
 io.on('connection', function (socket) {
 	join(socket,socket.client.request.headers.referer.match(/[^\/]\/([^\/]*)\/?$/i)[1].toLowerCase());
