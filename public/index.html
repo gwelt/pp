@@ -47,7 +47,7 @@ function SocketIO() {if (!socket) {loadScript('/pp/socket.io/socket.io.js', func
 
 	socket.on('about:match', function (json) {
 		console.log(JSON.stringify(json)); // DEBUG
-		if ((!current_match)||(current_match.lastchange<json.lastchange))
+		if ((!current_match)||(current_match.lastchange<=json.lastchange))
 		{
 
 			document.getElementById('show_button').disabled=(json.hidden==false);

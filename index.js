@@ -24,7 +24,6 @@ app.use('/:path?/:id?/manifest.json', function (req, res) {
 });
 app.use(function(req,res) {res.sendFile(path.join(__dirname,'public','index.html'))});
 let default_cards = '?,0,1,2,3,5,8,13,20';
-let counter=0;
 
 io.on('connection', function (socket) {
 	join(socket,socket.client.request.headers.referer.match(/[^\/]\/([^\/]*)\/?$/i)[1].toLowerCase());
@@ -45,6 +44,7 @@ function Room(room_id) {
 	this.room_id=room_id;
 	this.cards=default_cards.trim().split(/\s*,\s*/);
 	this.hidden=undefined;
+	this.lastchange=0;
 }
 
 function find_room(room_id) {
@@ -109,8 +109,10 @@ function update_about_match(room) {
 			let players = clients.map((c)=>{let u=io.in(room).connected[c]; return {id:u.id,name:u.name,vote:u.vote}});
 			// if we are not waiting for someone to vote, show votes
 			if ( (roomObj.hidden==undefined) && (!clients.find((c)=>{let u=io.in(room).connected[c]; return u.vote==undefined})) ) {roomObj.hidden=false}
-			let lastchange=new Date().getTime()+' '+(++counter%10); // to avoid a race condition
-			io.in(room).emit('about:match',{room:room,cards:roomObj.cards,players:players,lastchange:lastchange,hidden:roomObj.hidden});
+			let lastchange=new Date().getTime();
+			if (roomObj.lastchange>=lastchange) {lastchange=roomObj.lastchange+1} // avoid race-condition
+			roomObj.lastchange=lastchange;
+			io.in(room).emit('about:match',{room:room,cards:roomObj.cards,players:players,lastchange:roomObj.lastchange,hidden:roomObj.hidden});
 		});		
 	}
 }
