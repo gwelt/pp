@@ -26,7 +26,7 @@ app.use('/:path?/:id?/manifest.json', function (req, res) {
 });
 app.use(function(req,res) {res.sendFile(path.join(__dirname,'public','index.html'))});
 //let default_cards = '?,0,1,2,3,5,8,13,20';
-let default_cards = '?,0..32,++';
+let default_cards = '?,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,++';
 
 io.on('connection', function (socket) {
 	join(socket,socket.client.request.headers.referer.match(/[^\/]\/([^\/]*)\/?$/i)[1].toLowerCase());
