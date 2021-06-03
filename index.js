@@ -11,16 +11,18 @@ app.use('/:path?/:id?/manifest.json', function (req, res) {
 	res.json({
 		"short_name": (req.params.id?''+req.params.id+' planning poker':'planning poker'),
 		"name": (req.params.id?''+req.params.id+' planning poker':'planning poker'),
-		"icons": [
-			{"src": "/images/pp192.png","sizes": "192x192","type": "image/png"},
-			{"src": "/images/pp512.png","sizes": "512x512","type": "image/png"},
-			{"src": "/images/pp1024.png","sizes": "1024x1024","type": "image/png"}
-		],
 		"start_url": '/'+(req.params.path?req.params.path+'/':'')+(req.params.id||''),
 		"background_color": "#000",
 		"theme_color": "#000",
 		"display": "standalone"
 	});
+/*
+		"icons": [
+			{"src": "/images/pp192.png","sizes": "192x192","type": "image/png"},
+			{"src": "/images/pp512.png","sizes": "512x512","type": "image/png"},
+			{"src": "/images/pp1024.png","sizes": "1024x1024","type": "image/png"}
+		],
+*/
 });
 app.use(function(req,res) {res.sendFile(path.join(__dirname,'public','index.html'))});
 let default_cards = '?,0,1,2,3,5,8,13,20';
@@ -97,6 +99,21 @@ function reset(room) {
 function set_room_cards(room,cards) {
 	let roomObj=find_room(room);
 	if (roomObj) {
+		
+		// parse cards for special-feature-input like "1..25"
+		cards=cards.replace(/([0-9]{1,2})\.\.([0-9]{1,2})/,(a,b,c)=>{
+			b=b*1;
+			c=c*1;
+			if (b<c) {
+				let r=[];
+				while ((b<=c) && (r.length<=51)) {
+					r.push(b);
+					b++;
+				}
+				if (r.length<51) {return r.join(',')} else {return a}
+			} else {return a}
+		});
+
 		roomObj.cards=(cards||default_cards).trim().split(/\s*,\s*/);
 		reset(room);
 	}
@@ -106,13 +123,13 @@ function update_about_match(room) {
 	let roomObj=find_room(room);
 	if (roomObj) {
 		io.in(room).clients((err , clients) => {
-			let players = clients.map((c)=>{let u=io.in(room).connected[c]; return {id:u.id,name:u.name,vote:u.vote}});
+			let players = clients.map((c)=>{let u=io.in(room).connected[c]; if (u) {return {id:u.id,name:u.name,vote:u.vote}} else {return {}}});
 			// if we are not waiting for someone to vote, show votes
 			if ( (roomObj.hidden==undefined) && (!clients.find((c)=>{let u=io.in(room).connected[c]; return u.vote==undefined})) ) {roomObj.hidden=false}
 			let lastchange=new Date().getTime();
 			if (roomObj.lastchange>=lastchange) {lastchange=roomObj.lastchange+1} // avoid race-condition
 			roomObj.lastchange=lastchange;
-			io.in(room).emit('about:match',{room:room,cards:roomObj.cards,players:players,lastchange:roomObj.lastchange,hidden:roomObj.hidden});
+			io.in(room).emit('about:match',{DO_NOT:'CHEAT!',room:room,cards:roomObj.cards,players:players,lastchange:roomObj.lastchange,hidden:roomObj.hidden});
 		});		
 	}
 }

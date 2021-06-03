@@ -53,7 +53,9 @@ function SocketIO() {if (!socket) {loadScript('/pp/socket.io/socket.io.js', func
 			document.getElementById('show_button').disabled=(json.hidden==false);
 			document.getElementById('show_button').style.display=(json.hidden==false)?'none':'block';
 			document.getElementById('results').style.display=(json.hidden!==false)?'none':'block';
-			document.getElementById('deck').value=json.cards;
+			if (document.getElementById('deck').style.display!=='block') {
+				document.getElementById('deck').value=json.cards;
+			}
 
 			// compare and update players
 			update_players(current_match,json);
@@ -65,7 +67,7 @@ function SocketIO() {if (!socket) {loadScript('/pp/socket.io/socket.io.js', func
 			// update statistics
 			var votes=[];
 			json.players.forEach(function(p){votes.push(p.vote)});
-			if ((votes.length>0)&&(votes.every(function(val,i,arr){return val===arr[0]}))) {document.getElementById('results').innerHTML='CONSENSUS!'} else {
+			if ((votes.length>0)&&(votes.every(function(val,i,arr){return val===arr[0]}))) {document.getElementById('results').innerHTML='Applause! Applause!'} else {
 				votes=votes.filter(function(v){return !isNaN(v)});
 				document.getElementById('results').innerHTML='median '+median(votes)+'<span class=ar>&Oslash; '+average(votes)+'</span>';
 			}
@@ -86,7 +88,7 @@ function SocketIO() {if (!socket) {loadScript('/pp/socket.io/socket.io.js', func
 
 function update_deck(current,updated) {
 	var i=1;
-	function add_break() {return (i++)%3==0?'<div class=br></div>':'';}
+	function add_break() {return (i++)%5==0?'<div class=br></div>':'';}
 	document.getElementById('cards').innerHTML='<div class=cards_container>'+updated.cards.reduce(function(a,c){return a+'<div class="card'+((c==current_vote)?' card_active':'')+'" onclick=set(undefined,\''+c+'\')>'+(c||'&nbsp;')+'</div>'+add_break()},'')+'</div><div class=br></div>';
 }
 
@@ -149,7 +151,9 @@ function median(array) {
 function set(name,vote) {
 	if (name!==undefined) {current_name=name};
 	if (vote!==undefined) {current_vote=vote};
-	socket.emit('set',current_name,current_vote);
+	if (socket) {
+		socket.emit('set',current_name,current_vote);
+	}
 }
 function set_room_cards() {
 	socket.emit('set_room_cards',document.getElementById('deck').value);
@@ -390,21 +394,20 @@ if (!Array.prototype.find) {
 		writable: true
 	});
 }
-
 </script>
 
 <style>
 	* {box-sizing: border-box;}
-	html, body, section, div, input, button {border-radius: 0.2rem;font-family: Monospace; font-size: 1.25rem;}
+	html, body, section, div, input, button {border-radius: 0.2rem;font-family: Monospace; font-size: 1.2rem;}
 	body {border:0; padding:0%; margin:0; background-color:#1c1c1c; color: #fff;}
-	input {width:100%;padding:0.2rem 0.4rem; padding:0.2rem 0.4rem; margin:0.2rem 0; background-color:#1c1c1c; color:#c0c0c0;border: 1px solid #505050; outline-width: 0;}
+	input {width:100%;padding:0.2rem 0.4rem; padding:0.2rem 0.4rem; margin:0.2rem 0; background-color:#1c1c1c; color:#ffffff;border: 1px solid #505050; outline-width: 0;}
 	#name {margin:0;}
 	button {border: 2px solid #707070;outline-width: 0;width:100%;padding:0.2rem 0.4rem; margin:0.2rem 0; background-color:#505050;color:#fff;cursor:pointer;}
 	@media (hover: hover) {
 		button:hover {background-color:#707070}
 	}	
 	button:disabled {background-color:#505050;color:#707070;}
-	.bigscreen {padding:1.4rem; margin:0;}
+	.bigscreen {padding:0.8rem; margin:0;}
 	.screen {min-width:280px; max-width:420px; margin:auto;}
 	.players {}
 	.player {border-radius: 0.2rem 0 0 0.2rem;transition:0.5s;min-height:1rem;width:81%;background-color:#505050; padding:0.2rem 0.4rem; margin-bottom:0.2rem;overflow:hidden;white-space: nowrap;}
@@ -415,8 +418,8 @@ if (!Array.prototype.find) {
 	.results {border: 2px solid transparent;width:100%;padding:0.2rem 0.4rem; margin:0.2rem 0; color:#fff;}
 	.subline {border: 2px solid transparent;width:100%;padding:0.2rem 0.4rem; margin:0.2rem 0; color:#fff; font-size:0.8rem; text-align:center;}
 	.cards {padding:1rem 0.1rem;}
-	.cards_container {margin:auto}
-	.card {width:31%;float:left;overflow:hidden;background-color:#505050;color:#fff;font-size:2rem;text-align:center;padding:1rem 0;margin:1%;cursor:pointer;}
+	.cards_container {margin:auto;}
+	.card {width:18%;float:left;overflow:hidden;background-color:#505050;color:#fff;font-size:1.6rem;text-align:center;padding:0.25rem 0;margin:1%;cursor:pointer;}
 	.card:hover {background-color:#707070}
 	.card_active {background-color:#80e080;color:#000;}
 	.card_active:hover {background-color:#80e080;color:#000;}
@@ -430,14 +433,14 @@ if (!Array.prototype.find) {
 </style>
 
 </head>
-<body>
+<body onload=javascript:document.getElementById('name').focus();>
 <div id="bigscreen" class="bigscreen">
 	<div id="screen" class="screen">
-		<input type="text" id="name" autocomplete="off" placeholder="your name" onkeyup="set(this.value)" onblur="set(this.value)">
+		<input type="text" id="name" autocomplete="off" placeholder="your name" onkeyup="set(this.value)">
 		<div id="cards" class="cards"></div>
 		<div id="players" class="players"></div>
 		<br><div id="results" class="results"></div><button id="show_button" onclick="show()">show</button><button id="reset_button" onclick="set_room_cards()">reset</button><button onclick="leave()">leave</button>
-		<div id="subline" class="subline">&nbsp;<span class="link_nounderline" onclick="document.getElementById('deck').style.display='block';document.getElementById('subline').style.display='none';">click here to edit the list of cards</span>&nbsp;</div>
+		<div id="subline" class="subline">&nbsp;<span class="link_nounderline" onclick="document.getElementById('deck').style.display='block';document.getElementById('subline').style.display='none';">click <span style=text-decoration:underline>here</span> to edit the list of cards</span>&nbsp;</div>
 		<input type="text" id="deck" autocomplete="off" placeholder="list of cards">
 	</div>
 </div>
