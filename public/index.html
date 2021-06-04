@@ -11,7 +11,7 @@
 <meta name="Description" content="planning poker">
 <title>planning poker</title>
 <script>
-var socket,current_vote,current_match=undefined;
+var socket,current_vote,current_match,debug=undefined;
 var default_names = ['Kermit the Frog','Miss Piggy','Fozzie Bear','Gonzo','Rowlf the Dog','Scooter','Animal','Pepe the King Prawn','Rizzo the Rat','Walter','Dr. Teeth','Statler','Waldorf','Bunsen Honeydew','Beaker','The Swedish Chef','Sam Eagle','Camilla the Chicken','Bobo the Bear','Clifford'];
 var current_name=getCookie('ppname')||default_names[Math.floor(Math.random()*default_names.length)];
 
@@ -46,7 +46,7 @@ function SocketIO() {if (!socket) {loadScript('/pp/socket.io/socket.io.js', func
 	});
 
 	socket.on('about:match', function (json) {
-		console.log(JSON.stringify(json)); // DEBUG
+		if (debug) {console.log(JSON.stringify(json))}; // DEBUG
 		if ((!current_match)||(current_match.lastchange<=json.lastchange))
 		{
 
