@@ -26,8 +26,17 @@ if (1) { //(window.location.pathname.substr(1)) {
 function loadScript(src, done) {
 	var js = document.createElement('script');
 	js.src = src;
-	js.onload = function() {done(src+' executed')};
+	js.onload = function() {done(src+' executed')};	
 	document.head.appendChild(js);
+}
+
+function showQRcode(element,url,options) {
+  if (typeof QRCode == 'undefined') {
+    loadScript('/qrcode.min.js',function(){showQRcode(element,url,options)});
+  } else {
+    QRCode.toCanvas(element,url,options,function (error) {if (error) console.error(error)})
+  }
+  element.style.display='inline';
 }
 
 setTimeout(function(){SocketIO()},0);
@@ -169,7 +178,8 @@ function leave() {
 	current_vote=undefined;
 	var cookie_question='<p><div id=cookie_question><p>Have a cookie and I\'ll remember your name, '+(current_name||'')+'!<button id="remember" class="byebye" onclick="setCookie(\'ppname\',\''+(current_name||'')+'\',30);">get the cookie</button></div>';
 	if (getCookie('ppname')==current_name) {cookie_question=''}
-	document.getElementById('screen').innerHTML='<h1>Hope you enjoyed the show!</h1>'+cookie_question+'<p>Left by mistake?<button class="byebye" onclick=location.reload()>join again</button>';  
+	document.getElementById('screen').innerHTML='<h1>Hope you enjoyed the show!</h1>'+cookie_question+'<p>Left by mistake?<button class="byebye" onclick=location.reload()>join again</button><p style=text-align:center><canvas id="qrcode" style=display:none></canvas><br><a href='+window.location+' class=minilink>'+window.location+'</a></p>';
+	showQRcode(document.getElementById('qrcode'),""+window.location);
 }
 
 function setCookie(cname, cvalue, exdays) {
@@ -425,6 +435,7 @@ if (!Array.prototype.find) {
 	.card_active:hover {background-color:#80e080;color:#000;}
 	.link {text-decoration:underline;cursor:pointer;}
 	.link_nounderline {cursor:pointer;}
+	.minilink {font-size:0.6rem;color:#ffffff;text-decoration: none;}
 	.admin {clear:both;margin-top:1rem}
 	#deck {display:none;}
 	.br {clear:both}
