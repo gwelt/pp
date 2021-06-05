@@ -180,6 +180,7 @@ function leave() {
 	if (getCookie('ppname')==current_name) {cookie_question=''}
 	document.getElementById('screen').innerHTML='<h1>Hope you enjoyed the show!</h1>'+cookie_question+'<p>Left by mistake?<button class="byebye" onclick=location.reload()>join again</button><p style=text-align:center><canvas id="qrcode" style=display:none></canvas><br><a href='+window.location+' class=minilink>'+window.location+'</a></p>';
 	showQRcode(document.getElementById('qrcode'),""+window.location);
+	window.scrollTo(0,0);
 }
 
 function setCookie(cname, cvalue, exdays) {
