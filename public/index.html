@@ -32,7 +32,7 @@ function loadScript(src, done) {
 
 function showQRcode(element,url,options) {
   if (typeof QRCode == 'undefined') {
-    loadScript('/qrcode.min.js',function(){showQRcode(element,url,options)});
+    loadScript('qrcode.min.js',function(){showQRcode(element,url,options)});
   } else {
     QRCode.toCanvas(element,url,options,function (error) {if (error) console.error(error)})
   }

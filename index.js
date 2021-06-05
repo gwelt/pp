@@ -24,7 +24,7 @@ app.use('/:path?/:id?/manifest.json', function (req, res) {
 		],
 */
 });
-app.use('/', express.static(__dirname + '/public'));
+app.use('(/pp?)(/:id?)/', express.static(__dirname + '/public'));
 app.use(function(req,res) {res.sendFile(path.join(__dirname,'public','index.html'))});
 
 //let default_cards = '?,0,1,2,3,5,8,13,20';
