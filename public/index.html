@@ -7,7 +7,7 @@
 <link rel="apple-touch-icon" sizes="180x180" href="images/pp180.png">
 <link rel="manifest" href="manifest.json">
 -->
-<meta name="theme-color" content="#000">
+<meta name="theme-color" content="#000000">
 <meta name="Description" content="planning poker">
 <title>planning poker</title>
 <script>
@@ -178,7 +178,8 @@ function leave() {
 	current_vote=undefined;
 	var cookie_question='<p><div id=cookie_question><p>Have a cookie and I\'ll remember your name, '+(current_name||'')+'!<button id="remember" class="byebye" onclick="setCookie(\'ppname\',\''+(current_name||'')+'\',30);">get the cookie</button></div>';
 	if (getCookie('ppname')==current_name) {cookie_question=''}
-	document.getElementById('screen').innerHTML='<h1>Hope you enjoyed the show!</h1>'+cookie_question+'<p>Left by mistake?<button class="byebye" onclick=location.reload()>join again</button><p style=text-align:center><canvas id="qrcode" style=display:none></canvas><br><a href='+window.location+' class=minilink>'+window.location+'</a></p>';
+	var qrcode_code = '<p style=text-align:center><canvas id="qrcode" style=display:none></canvas><br><a href='+window.location+' class=minilink>'+window.location+'</a></p>';
+	document.getElementById('screen').innerHTML='<div class=h1>Hope you enjoyed the show!</div>'+cookie_question+'<p>Left by mistake?<button class="byebye" onclick=location.reload()>join again</button>'+qrcode_code;
 	showQRcode(document.getElementById('qrcode'),""+window.location);
 	window.scrollTo(0,0);
 }
@@ -410,7 +411,7 @@ if (!Array.prototype.find) {
 <style>
 	* {box-sizing: border-box;}
 	html, body, section, div, input, button {border-radius: 0.2rem;font-family: Monospace; font-size: 1.2rem;}
-	body {border:0; padding:0%; margin:0; background-color:#1c1c1c; color: #fff;}
+	body {border:0; padding:0%; margin:0; background-color:#000000; color: #ffffff;}
 	input {width:100%;padding:0.2rem 0.4rem; padding:0.2rem 0.4rem; margin:0.2rem 0; background-color:#1c1c1c; color:#ffffff;border: 1px solid #505050; outline-width: 0;}
 	#name {margin:0;}
 	button {border: 2px solid #707070;outline-width: 0;width:100%;padding:0.2rem 0.4rem; margin:0.2rem 0; background-color:#505050;color:#fff;cursor:pointer;}
@@ -441,6 +442,7 @@ if (!Array.prototype.find) {
 	#deck {display:none;}
 	.br {clear:both}
 	.ar {float:right}
+	.h1 {font-size:1.6rem;font-weight:bold;padding:0.6rem 0 0 0;}
 	.byebye {margin:0.8rem 0 1rem 0}
 </style>
 
